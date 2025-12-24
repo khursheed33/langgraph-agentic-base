@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "langgraph-agentic-base"
+version = "0.1.0"
+description = "LangGraph-based multi-agent system with supervisor and task planner"
+requires-python = ">=3.12"
+authors = [
+    {name = "Khursheed Gaddi", email = "gaddi33khursheed@gmail.com"},
+]
+dependencies = [
+    "langgraph>=1.0.0",   
+    "langchain>=1.2.0",
+    "langchain-groq>=1.1.1",
+    "langchain-core>=1.0.0",  
+    "pydantic>=2.12.5",
+    "python-dotenv>=1.2.1",
+    "rich>=14.0.0",
+    "neo4j>=6.0.0",
+    "typing-extensions>=4.15.0",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.11.0",
+    "ruff>=0.1.6",
+]
+
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
