@@ -1,15 +1,13 @@
 """Neo4j query tool."""
 
-import os
 from typing import Optional, Type
 
 from langchain_core.tools import BaseTool
 from neo4j import GraphDatabase
 from pydantic import BaseModel, Field
 
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
+from src.utils.settings import settings
 
 
 class Neo4jQueryInput(BaseModel):
@@ -37,9 +35,9 @@ class Neo4jQueryTool(BaseTool):
     ) -> list[dict]:
         """Execute the Cypher query."""
         try:
-            uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-            user = os.getenv("NEO4J_USER", "neo4j")
-            password = os.getenv("NEO4J_PASSWORD", "")
+            uri = settings.NEO4J_URI
+            user = settings.NEO4J_USER
+            password = settings.NEO4J_PASSWORD
             driver = GraphDatabase.driver(uri, auth=(user, password))
             with driver.session() as session:
                 result = session.run(query, parameters or {})

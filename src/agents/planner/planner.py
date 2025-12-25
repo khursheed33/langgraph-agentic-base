@@ -14,9 +14,7 @@ from src.agents.base_agent import BaseAgent
 from src.constants import AgentType
 from src.models.state import AgentState, Task, TaskList, UsageStats
 from src.models.planner import PlannerOutput
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 
 def extract_json_from_text(text: str) -> str:

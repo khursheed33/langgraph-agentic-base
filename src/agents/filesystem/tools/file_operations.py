@@ -6,9 +6,7 @@ from typing import Optional, Type
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 
 class ReadFileInput(BaseModel):

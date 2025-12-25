@@ -14,9 +14,7 @@ from src.agents.query.query import QueryAgent
 from src.agents.supervisor.supervisor import SupervisorAgent
 from src.constants import AgentType, AVAILABLE_AGENTS, END_NODE
 from src.models.state import AgentState, UsageStats
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 # Agent registry mapping agent types to their classes
 AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {

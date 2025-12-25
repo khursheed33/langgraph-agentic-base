@@ -1,0 +1,9 @@
+- Strictly follow existing project folder structure; never add new top-level directories.
+- Do not create unnecessary files like summary.md, test.py, example tests, or test_feature folders.
+- Always create changelog entries in .changelog/ folder with timestamp titles (e.g., auth_updates_202512-23T214200Z.md).
+- Keep changelog details very short: only "what implemented," no extra commentary.
+- Use async/await for all endpoints and I/O operations.
+- Place routers in app/api/v1/ by feature; mount in main.py.
+- Define Pydantic schemas in app/schemas/; use dependency injection for DB/security.
+- Always activate venv before executing any command
+- import always should start with app.subfolder.file

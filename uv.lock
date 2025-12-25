@@ -153,6 +153,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dynaconf"
+version = "3.2.12"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/7a6f84b68268fe1d12e709faec7d293e0c37c9c03bacaf363de41e7e7568/dynaconf-3.2.12.tar.gz", hash = "sha256:29cea583b007d890e6031fa89c0ac489b631c73dbee83bcd5e6f97602c26354e", size = 313801, upload-time = "2025-10-10T19:54:06.164Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/68/51adede38ab2ee9ecfddb8b60a80a42b618a72f1018fcf60974e5d852831/dynaconf-3.2.12-py2.py3-none-any.whl", hash = "sha256:eb2a11865917dff8810c6098cd736b8f4d2f4e39ad914500e2dfbe064b82c499", size = 237788, upload-time = "2025-10-10T19:54:03.731Z" },
+]
+
+[[package]]
 name = "groq"
 version = "0.37.1"
 source = { registry = "https://pypi.org/simple" }
@@ -309,6 +318,48 @@ wheels = [
 ]
 
 [[package]]
+name = "langgraph-agentic-base"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "dynaconf" },
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langchain-groq" },
+    { name = "langgraph" },
+    { name = "neo4j" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+    { name = "typing-extensions" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "black" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'", specifier = ">=23.11.0" },
+    { name = "dynaconf", specifier = ">=3.2.0" },
+    { name = "langchain", specifier = ">=1.2.0" },
+    { name = "langchain-core", specifier = ">=1.0.0" },
+    { name = "langchain-groq", specifier = ">=1.1.1" },
+    { name = "langgraph", specifier = ">=1.0.0" },
+    { name = "neo4j", specifier = ">=6.0.0" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "rich", specifier = ">=14.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.6" },
+    { name = "typing-extensions", specifier = ">=4.15.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "langgraph-checkpoint"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -386,46 +437,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
 ]
-
-[[package]]
-name = "migration-agentic-test"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "langchain" },
-    { name = "langchain-core" },
-    { name = "langchain-groq" },
-    { name = "langgraph" },
-    { name = "neo4j" },
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "rich" },
-    { name = "typing-extensions" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "black" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'", specifier = ">=23.11.0" },
-    { name = "langchain", specifier = ">=1.2.0" },
-    { name = "langchain-core", specifier = ">=1.0.0" },
-    { name = "langchain-groq", specifier = ">=1.1.1" },
-    { name = "langgraph", specifier = ">=1.0.0" },
-    { name = "neo4j", specifier = ">=6.0.0" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "rich", specifier = ">=14.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.6" },
-    { name = "typing-extensions", specifier = ">=4.15.0" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "mypy-extensions"

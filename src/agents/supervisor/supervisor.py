@@ -7,9 +7,7 @@ from src.constants import AgentType, END_NODE
 from src.llm import get_llm
 from src.models.state import AgentState, UsageStats
 from src.models.supervisor import SupervisorDecision
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 
 class SupervisorAgent(BaseAgent):

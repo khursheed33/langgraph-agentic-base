@@ -5,9 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from src.models.state import AgentState, TaskList
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 
 def find_latest_task_file() -> Optional[Path]:

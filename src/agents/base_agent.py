@@ -10,9 +10,7 @@ from langchain_core.tools import BaseTool
 
 from src.llm import get_llm
 from src.models.state import AgentState, UsageStats
-from src.utils.logger import get_logger
-
-logger = get_logger()
+from src.utils.logger import logger
 
 
 class BaseAgent(ABC):

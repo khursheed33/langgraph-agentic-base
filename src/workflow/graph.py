@@ -24,10 +24,8 @@ from src.agents.registry import (
 from src.constants import AgentType, END_NODE
 from src.models.state import AgentState
 from src.models.state_typed import AgentStateTyped
-from src.utils.logger import get_logger
+from src.utils.logger import logger
 from langgraph.graph.state import CompiledStateGraph
-
-logger = get_logger()
 
 
 def create_workflow() -> Any:

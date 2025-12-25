@@ -6,10 +6,8 @@ from typing import Any
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, TaskStatus
 from src.models.state import AgentState, UsageStats
-from src.utils.logger import get_logger
+from src.utils.logger import logger
 from src.utils.task_persistence import update_task_file
-
-logger = get_logger()
 
 
 class FileSystemAgent(BaseAgent):

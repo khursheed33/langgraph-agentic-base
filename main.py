@@ -1,20 +1,13 @@
 """Main entry point for the application."""
 
-import os
 import sys
 from typing import Optional
 
-from dotenv import load_dotenv
-
 from src.models.state import AgentState
 from src.models.state_typed import AgentStateTyped
-from src.utils.logger import get_logger
+from src.utils.logger import logger
+from src.utils.settings import settings
 from src.workflow import create_workflow
-
-# Load environment variables
-load_dotenv()
-
-logger = get_logger()
 
 
 def run_workflow(user_input: str) -> dict:
@@ -37,7 +30,7 @@ def run_workflow(user_input: str) -> dict:
 
     try:
         # Run workflow (LangGraph cookbook pattern)
-        config = {"recursion_limit": int(os.getenv("MAX_ITERATIONS", "50"))}
+        config = {"recursion_limit": settings.MAX_ITERATIONS}
         final_state_dict = app.invoke(initial_state, config=config)
 
         # Convert back to Pydantic for easier access

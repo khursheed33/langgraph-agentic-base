@@ -1,17 +1,11 @@
 """Singleton LLM instance using Groq."""
 
-import os
 from typing import Optional
 
-from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 
-from src.utils.logger import get_logger
-
-# Load environment variables
-load_dotenv()
-
-logger = get_logger()
+from src.utils.logger import logger
+from src.utils.settings import settings
 
 
 class LLMInstance:
@@ -33,8 +27,8 @@ class LLMInstance:
 
     def _setup_llm(self) -> None:
         """Set up the Groq LLM instance."""
-        api_key = os.getenv("GROQ_API_KEY")
-        model = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+        api_key = settings.GROQ_API_KEY
+        model = settings.GROQ_MODEL
 
         if not api_key:
             raise ValueError(
