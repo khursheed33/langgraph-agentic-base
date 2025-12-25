@@ -1,36 +1,18 @@
 """Planner agent implementation."""
 
 import json
-import os
-import re
-from datetime import datetime
-from pathlib import Path
-from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType
-from src.models.state import AgentState, Task, TaskList, UsageStats
+from src.models.state import AgentState, TaskList, UsageStats
 from src.models.planner import PlannerOutput
+from src.utils.json_utils import extract_json_from_text
 from src.utils.logger import logger
-
-
-def extract_json_from_text(text: str) -> str:
-    """Extract JSON from text, handling markdown code blocks."""
-    # Try to find JSON in markdown code blocks
-    json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
-    if json_match:
-        return json_match.group(1)
-    
-    # Try to find JSON object directly
-    json_match = re.search(r'\{.*\}', text, re.DOTALL)
-    if json_match:
-        return json_match.group(0)
-    
-    # Return original text if no JSON found
-    return text
+from src.utils.prompt_utils import load_prompt_template_with_agents
+from src.utils.task_persistence import save_task_list
+from src.utils.token_calculator import track_token_usage
 
 
 class PlannerAgent(BaseAgent):
@@ -40,6 +22,12 @@ class PlannerAgent(BaseAgent):
         """Initialize planner agent."""
         super().__init__("planner")
         self.json_parser = JsonOutputParser(pydantic_object=PlannerOutput)
+        # Override prompt template with dynamic agent info
+        self.prompt_template = load_prompt_template_with_agents(
+            "planner", 
+            exclude_agents=["supervisor", "planner"],
+            format_type="planner"
+        )
 
     def execute(
         self, state: AgentState, usage_stats: UsageStats
@@ -49,11 +37,29 @@ class PlannerAgent(BaseAgent):
         usage_stats.increment_agent_usage("planner")
 
         try:
-            # Format prompt template with user input
-            user_input_text = f"User Input: {state.user_input}"
+            # Build context including conversation history
+            context_parts = [f"User Input: {state.user_input}"]
+            
+            # Add conversation history if available
+            if state.conversation_history:
+                context_parts.append("\n=== Previous Conversation History ===")
+                for i, entry in enumerate(state.conversation_history[-3:], 1):  # Last 3 conversations
+                    prev_input = entry.get("user_input", "")
+                    prev_result = entry.get("result", "")
+                    context_parts.append(f"\nPrevious Question {i}: {prev_input}")
+                    if prev_result:
+                        # Truncate long results
+                        result_preview = prev_result[:300] + "..." if len(prev_result) > 300 else prev_result
+                        context_parts.append(f"Previous Answer {i}: {result_preview}")
+                context_parts.append("\n=== End of Conversation History ===\n")
+                context_parts.append("\nNote: Consider the conversation history when planning tasks. "
+                                   "The user may be asking a follow-up question or referring to previous context.")
+            
+            user_input_text = "\n".join(context_parts)
             messages = self.prompt_template.format_messages(input=user_input_text)
 
             response = self.llm.invoke(messages)
+            track_token_usage(response, usage_stats)
             logger.debug(f"Planner LLM response: {response.content[:500]}")  # Log first 500 chars
             
             # Extract JSON from response (handles markdown code blocks)
@@ -80,7 +86,7 @@ class PlannerAgent(BaseAgent):
                             task_dict["agent"] = AgentType(task_dict["agent"])
                         except ValueError:
                             # If agent name doesn't match any AgentType, try to find closest match
-                            agent_str = task_dict["agent"].lower()
+                            agent_str = str(task_dict["agent"]).lower()
                             for agent_type in AgentType:
                                 if agent_type.value == agent_str:
                                     task_dict["agent"] = agent_type
@@ -101,37 +107,7 @@ class PlannerAgent(BaseAgent):
             )
 
             # Save tasks to tasks/ folder
-            try:
-                tasks_dir = Path("tasks")
-                tasks_dir.mkdir(exist_ok=True)
-                
-                # Generate unique task file name with timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                task_file = tasks_dir / f"task_{timestamp}.json"
-                
-                # Convert task list to JSON-serializable format
-                task_data = {
-                    "user_input": state.user_input,
-                    "created_at": timestamp,
-                    "reasoning": planner_output.reasoning,
-                    "tasks": [
-                        {
-                            "agent": task.agent.value,
-                            "description": task.description,
-                            "status": task.status.value,
-                            "result": task.result,
-                            "error": task.error,
-                        }
-                        for task in task_list.tasks
-                    ],
-                }
-                
-                with open(task_file, "w", encoding="utf-8") as f:
-                    json.dump(task_data, f, indent=2, ensure_ascii=False)
-                
-                logger.info(f"Saved task list to {task_file}")
-            except Exception as e:
-                logger.error(f"Failed to save task list: {e}")
+            save_task_list(state, reasoning=planner_output.reasoning)
 
             # Add message to state
             state.messages.append(

@@ -1,6 +1,6 @@
 """Singleton LLM instance using Groq."""
 
-from typing import Optional
+from typing import Any, Optional
 
 from langchain_groq import ChatGroq
 
@@ -26,9 +26,13 @@ class LLMInstance:
             self._setup_llm()
 
     def _setup_llm(self) -> None:
-        """Set up the Groq LLM instance."""
+        """Set up the LLM instance based on provider configuration."""
+        provider = settings.LLM_PROVIDER.lower()
         api_key = settings.GROQ_API_KEY
         model = settings.GROQ_MODEL
+        temperature = settings.LLM_TEMPERATURE
+        max_tokens = settings.LLM_MAX_TOKENS
+        timeout = settings.LLM_TIMEOUT
 
         if not api_key:
             raise ValueError(
@@ -37,12 +41,31 @@ class LLMInstance:
             )
 
         try:
-            self._llm = ChatGroq(
-                groq_api_key=api_key,
-                model_name=model,
-                temperature=0.1,
-            )
-            logger.info(f"LLM initialized with model: {model}")
+            if provider == "groq":
+                # Build kwargs dict, only include supported parameters
+                groq_kwargs: dict[str, Any] = {
+                    "groq_api_key": api_key,
+                    "model_name": model,
+                    "temperature": temperature,
+                }
+                
+                # Add optional parameters if they're set
+                if max_tokens:
+                    groq_kwargs["max_tokens"] = max_tokens
+                if timeout:
+                    groq_kwargs["timeout"] = timeout
+                
+                self._llm = ChatGroq(**groq_kwargs)
+                logger.info(
+                    f"LLM initialized with provider: {provider}, "
+                    f"model: {model}, temperature: {temperature}, "
+                    f"max_tokens: {max_tokens}, timeout: {timeout}"
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported LLM provider: {provider}. "
+                    "Currently only 'groq' is supported."
+                )
         except Exception as e:
             logger.error(f"Failed to initialize LLM: {e}")
             raise

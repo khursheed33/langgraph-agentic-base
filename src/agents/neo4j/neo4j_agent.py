@@ -1,13 +1,18 @@
 """Neo4j agent implementation."""
 
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from typing import Any
+from langchain_core.messages import ToolMessage
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, TaskStatus
 from src.models.state import AgentState, UsageStats
+from src.utils.agent_utils import (
+    build_agent_messages,
+    build_task_description,
+    find_pending_task,
+)
 from src.utils.logger import logger
 from src.utils.task_persistence import update_task_file
+from src.utils.token_calculator import track_token_usage
 
 
 class Neo4jAgent(BaseAgent):
@@ -33,13 +38,7 @@ class Neo4jAgent(BaseAgent):
             return state, usage_stats
 
         # Find current task for neo4j agent
-        current_task = None
-        task_index = -1
-        for i, task in enumerate(state.task_list.tasks):
-            if task.agent == AgentType.NEO4J and task.status == TaskStatus.PENDING:
-                current_task = task
-                task_index = i
-                break
+        current_task, task_index = find_pending_task(state.task_list, AgentType.NEO4J)
 
         if not current_task:
             logger.warning("No pending Neo4j task found")
@@ -52,21 +51,17 @@ class Neo4jAgent(BaseAgent):
         current_task.status = TaskStatus.IN_PROGRESS
 
         try:
-            # Prepare input for agent
-            task_description = f"Task: {current_task.description}\n\nUser Request: {state.user_input}"
+            # Build task description
+            task_description = build_task_description(current_task, state.user_input)
             
             # Execute agent using LangGraph cookbook pattern
             # Step 1: Call LLM with tools bound
-            # Format prompt template to get system message
-            formatted_prompt = self.prompt_template.format_messages(input=task_description)
-            system_content = formatted_prompt[0].content if formatted_prompt else "You are a helpful assistant."
-            messages = [
-                SystemMessage(content=system_content),
-                HumanMessage(content=task_description),
-            ]
+            # Build messages using utility function
+            messages = build_agent_messages(self.prompt_template, task_description)
             
             # Get LLM response (may include tool calls)
             llm_response = self.llm_with_tools.invoke(messages)
+            track_token_usage(llm_response, usage_stats)
             result_text = ""
             tool_calls_executed = False
             
@@ -103,6 +98,7 @@ class Neo4jAgent(BaseAgent):
                 if tool_calls_executed:
                     final_messages = messages + [llm_response] + tool_messages
                     final_response = self.llm_with_tools.invoke(final_messages)
+                    track_token_usage(final_response, usage_stats)
                     result_text = final_response.content if hasattr(final_response, "content") else str(final_response)
                     # If final response is empty or just whitespace, use tool results formatted
                     if not result_text or not result_text.strip():

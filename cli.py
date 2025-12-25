@@ -152,29 +152,85 @@ def display_result(result: dict) -> None:
     console.print("\n" + "[dim]" + "─" * 80 + "[/dim]")
 
 
-def run_workflow(user_input: str) -> dict:
-    """Run the workflow with user input."""
+def run_workflow(user_input: str, thread_id: Optional[str] = None) -> dict:
+    """Run the workflow with user input and optional thread_id for conversation history.
+    
+    Args:
+        user_input: User's input/query.
+        thread_id: Optional thread ID for conversation continuity. If None, creates new thread.
+        
+    Returns:
+        Dictionary with workflow result and metadata.
+    """
+    import uuid
+    
     logger.info(f"Starting workflow with input: {user_input}")
+    
+    # Generate thread_id if not provided (for new conversation)
+    if thread_id is None:
+        thread_id = str(uuid.uuid4())
+        logger.info(f"Created new conversation thread: {thread_id}")
+    else:
+        logger.info(f"Continuing conversation thread: {thread_id}")
 
-    # Create workflow
+    # Create workflow with checkpointer
     app = create_workflow()
 
-    # Initialize state as dict (LangGraph expects dict/TypedDict)
-    initial_state: AgentStateTyped = {
-        "user_input": user_input,
-        "task_list": None,
-        "current_agent": None,
-        "messages": [],
-        "usage_stats": AgentState(user_input=user_input).usage_stats,
-        "final_result": None,
-        "error": None,
+    # Prepare config with thread_id for checkpointing
+    config = {
+        "recursion_limit": settings.MAX_ITERATIONS,
+        "configurable": {"thread_id": thread_id},
     }
 
     try:
-        # Run workflow (LangGraph cookbook pattern)
-        config = {"recursion_limit": settings.MAX_ITERATIONS}
+        # Try to get existing state from checkpoint
+        # This loads previous conversation history if thread_id exists
+        existing_state = None
+        try:
+            # Get the latest checkpoint state
+            checkpoint_state = app.get_state(config)
+            if checkpoint_state and checkpoint_state.values:
+                existing_state = checkpoint_state.values
+                logger.info(f"Loaded existing state for thread: {thread_id}")
+                logger.debug(f"Existing conversation_history length: {len(existing_state.get('conversation_history', []))}")
+                logger.debug(f"Existing messages length: {len(existing_state.get('messages', []))}")
+        except Exception as e:
+            logger.debug(f"No existing checkpoint found for thread {thread_id}: {e}")
+
+        # Initialize state - merge with existing state if available
+        if existing_state:
+            # Preserve conversation history and messages from previous state
+            existing_history = existing_state.get("conversation_history", [])
+            existing_messages = existing_state.get("messages", [])
+            
+            logger.info(f"Preserving {len(existing_history)} conversation entries and {len(existing_messages)} messages")
+            
+            # Update user_input but preserve conversation history
+            initial_state: AgentStateTyped = {
+                "user_input": user_input,
+                "task_list": None,  # Reset task_list for new query
+                "current_agent": None,  # Reset to start new workflow
+                "messages": existing_messages,  # Preserve all previous messages
+                "usage_stats": existing_state.get("usage_stats") or AgentState(user_input=user_input).usage_stats,
+                "final_result": None,  # Reset final result
+                "error": None,  # Reset error
+                "conversation_history": existing_history,  # Preserve conversation history
+            }
+        else:
+            # New conversation - initialize fresh state
+            initial_state: AgentStateTyped = {
+                "user_input": user_input,
+                "task_list": None,
+                "current_agent": None,
+                "messages": [],
+                "usage_stats": AgentState(user_input=user_input).usage_stats,
+                "final_result": None,
+                "error": None,
+                "conversation_history": [],
+            }
         
         with console.status("[bold green]Executing workflow...", spinner="dots"):
+            # Run workflow with thread_id for checkpointing (LangGraph cookbook pattern)
             final_state_dict = app.invoke(initial_state, config=config)
 
         # Convert back to Pydantic for easier access
@@ -190,9 +246,11 @@ def run_workflow(user_input: str) -> dict:
             },
             "messages": final_state.messages,
             "error": final_state.error,
+            "thread_id": thread_id,
+            "conversation_history": final_state.conversation_history,
         }
 
-        logger.info("Workflow completed successfully")
+        logger.info(f"Workflow completed successfully for thread: {thread_id}")
         return result
 
     except Exception as e:
@@ -207,8 +265,14 @@ def run_workflow(user_input: str) -> dict:
 
 
 def interactive_mode() -> None:
-    """Run in interactive mode."""
+    """Run in interactive mode with conversation history support."""
+    import uuid
+    
     display_welcome()
+    
+    # Create a thread_id for this interactive session
+    thread_id = str(uuid.uuid4())
+    console.print(f"[dim]Conversation thread ID: {thread_id}[/dim]\n")
 
     while True:
         console.print("\n")
@@ -222,7 +286,8 @@ def interactive_mode() -> None:
             console.print("[bold red]Please enter a valid request.[/bold red]")
             continue
 
-        result = run_workflow(user_input)
+        # Use the same thread_id for conversation continuity
+        result = run_workflow(user_input, thread_id=thread_id)
         display_result(result)
 
 

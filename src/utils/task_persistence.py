@@ -1,6 +1,7 @@
 """Utility functions for persisting tasks to disk."""
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -58,4 +59,48 @@ def update_task_file(state: AgentState) -> None:
         logger.debug(f"Updated task file: {task_file}")
     except Exception as e:
         logger.error(f"Failed to update task file: {e}")
+
+
+def save_task_list(state: AgentState, reasoning: Optional[str] = None) -> None:
+    """Save task list to tasks/ folder with timestamp.
+    
+    Args:
+        state: Agent state containing task list and user input.
+        reasoning: Optional reasoning string from planner.
+    """
+    try:
+        if not state.task_list:
+            logger.warning("No task list to save")
+            return
+        
+        tasks_dir = Path("tasks")
+        tasks_dir.mkdir(exist_ok=True)
+        
+        # Generate unique task file name with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        task_file = tasks_dir / f"task_{timestamp}.json"
+        
+        # Convert task list to JSON-serializable format
+        task_data = {
+            "user_input": state.user_input,
+            "created_at": timestamp,
+            "reasoning": reasoning or "",
+            "tasks": [
+                {
+                    "agent": task.agent.value,
+                    "description": task.description,
+                    "status": task.status.value,
+                    "result": task.result,
+                    "error": task.error,
+                }
+                for task in state.task_list.tasks
+            ],
+        }
+        
+        with open(task_file, "w", encoding="utf-8") as f:
+            json.dump(task_data, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"Saved task list to {task_file}")
+    except Exception as e:
+        logger.error(f"Failed to save task list: {e}")
 

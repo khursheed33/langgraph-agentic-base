@@ -4,10 +4,12 @@ from langchain_core.output_parsers import JsonOutputParser
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, END_NODE
-from src.llm import get_llm
 from src.models.state import AgentState, UsageStats
 from src.models.supervisor import SupervisorDecision
+from src.utils.context_utils import build_supervisor_context
 from src.utils.logger import logger
+from src.utils.prompt_utils import load_prompt_template_with_agents
+from src.utils.token_calculator import track_token_usage
 
 
 class SupervisorAgent(BaseAgent):
@@ -17,6 +19,12 @@ class SupervisorAgent(BaseAgent):
         """Initialize supervisor agent."""
         super().__init__("supervisor")
         self.json_parser = JsonOutputParser(pydantic_object=SupervisorDecision)
+        # Override prompt template with dynamic agent info
+        self.prompt_template = load_prompt_template_with_agents(
+            "supervisor",
+            exclude_agents=["supervisor"],
+            format_type="supervisor"
+        )
 
     def execute(
         self, state: AgentState, usage_stats: UsageStats
@@ -40,7 +48,7 @@ class SupervisorAgent(BaseAgent):
             return state, usage_stats
 
         # Prepare context for supervisor
-        context = self._build_context(state)
+        context = build_supervisor_context(state)
 
         # Get routing decision from LLM
         try:
@@ -49,6 +57,7 @@ class SupervisorAgent(BaseAgent):
             messages = formatted_messages
 
             response = self.llm.invoke(messages)
+            track_token_usage(response, usage_stats)
             decision_dict = self.json_parser.parse(response.content)
 
             decision = SupervisorDecision(**decision_dict)
@@ -90,35 +99,4 @@ class SupervisorAgent(BaseAgent):
             state.current_agent = None
 
         return state, usage_stats
-
-    def _build_context(self, state: AgentState) -> str:
-        """Build context string for supervisor decision."""
-        context_parts = [
-            f"User Input: {state.user_input}",
-        ]
-
-        if state.task_list:
-            if len(state.task_list.tasks) == 0:
-                context_parts.append("\nTask list is empty (no tasks needed).")
-            else:
-                context_parts.append("\nCurrent Task List:")
-                for i, task in enumerate(state.task_list.tasks):
-                    status_icon = "✓" if task.status.value == "completed" else "○"
-                    context_parts.append(
-                        f"  {i+1}. {status_icon} [{task.agent.value}] {task.description} "
-                        f"(Status: {task.status.value})"
-                    )
-
-                if state.task_list.all_tasks_completed():
-                    context_parts.append("\nAll tasks are completed.")
-                else:
-                    next_task = state.task_list.get_next_pending_task()
-                    if next_task:
-                        context_parts.append(
-                            f"\nNext pending task: [{next_task.agent.value}] {next_task.description}"
-                    )
-        else:
-            context_parts.append("\nNo task list exists. Need to create one.")
-
-        return "\n".join(context_parts)
 

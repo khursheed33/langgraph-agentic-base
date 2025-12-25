@@ -1,6 +1,6 @@
 """File system agent tools."""
 
-from src.agents.filesystem.tools.file_operations import (
+from src.agents.filesystem.tools.file_operations_tool import (
     file_exists_tool,
     read_file_tool,
     write_file_tool,

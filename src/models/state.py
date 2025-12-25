@@ -56,6 +56,26 @@ class TaskList(BaseModel):
         )
 
 
+class TokenUsageStats(BaseModel):
+    """Token usage statistics."""
+
+    input_tokens: int = Field(default=0, description="Total input tokens")
+    output_tokens: int = Field(default=0, description="Total output tokens")
+    total_tokens: int = Field(default=0, description="Total tokens")
+    input_cost: float = Field(default=0.0, description="Total input cost")
+    output_cost: float = Field(default=0.0, description="Total output cost")
+    total_cost: float = Field(default=0.0, description="Total cost")
+
+    def add_usage(self, input_tokens: int, output_tokens: int, input_cost: float, output_cost: float) -> None:
+        """Add token usage and cost."""
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
+        self.total_tokens += input_tokens + output_tokens
+        self.input_cost += input_cost
+        self.output_cost += output_cost
+        self.total_cost += input_cost + output_cost
+
+
 class UsageStats(BaseModel):
     """Tracks usage statistics for agents and tools."""
 
@@ -64,6 +84,9 @@ class UsageStats(BaseModel):
     )
     tool_usage: dict[str, int] = Field(
         default_factory=dict, description="Number of times each tool was used"
+    )
+    token_stats: TokenUsageStats = Field(
+        default_factory=TokenUsageStats, description="Token usage and cost statistics"
     )
 
     def increment_agent_usage(self, agent_name: str) -> None:
@@ -78,7 +101,7 @@ class UsageStats(BaseModel):
 class AgentState(BaseModel):
     """State managed by LangGraph StateGraph."""
 
-    user_input: str = Field(..., description="Original user input")
+    user_input: str = Field(..., description="Current user input")
     task_list: Optional[TaskList] = Field(
         default=None, description="List of tasks to execute"
     )
@@ -86,7 +109,7 @@ class AgentState(BaseModel):
         default=None, description="Currently executing agent name or '__end__' to end workflow"
     )
     messages: list[dict[str, Any]] = Field(
-        default_factory=list, description="Conversation messages"
+        default_factory=list, description="Conversation messages history"
     )
     usage_stats: UsageStats = Field(
         default_factory=UsageStats, description="Usage statistics"
@@ -95,4 +118,7 @@ class AgentState(BaseModel):
         default=None, description="Final result of the workflow"
     )
     error: Optional[str] = Field(default=None, description="Error message if any")
+    conversation_history: list[dict[str, Any]] = Field(
+        default_factory=list, description="Full conversation history across sessions"
+    )
 

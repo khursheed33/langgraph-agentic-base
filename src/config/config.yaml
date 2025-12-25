@@ -1,0 +1,133 @@
+# Main Configuration File
+# This file contains all system-wide configuration settings
+# Environment variables in .env file take precedence over these defaults
+
+# API Configuration
+api:
+  # API host (default: 0.0.0.0 for all interfaces)
+  host: "0.0.0.0"
+  
+  # API port (default: 8000)
+  port: 3301
+  
+  # API title
+  title: "LangGraph Agentic Base API"
+  
+  # API version
+  version: "0.1.0"
+  
+  # API description
+  description: "Multi-agent system API with supervisor and task planner"
+  
+  # Enable CORS
+  enable_cors: true
+  
+  # CORS origins (list of allowed origins)
+  cors_origins:
+    - "*"
+  
+  # API prefix (e.g., /api/v1)
+  prefix: "/api/v1"
+
+# LLM Configuration
+llm:
+  # Provider: "groq", "openai", "anthropic", etc.
+  provider: "groq"
+  
+  # Model name (provider-specific)
+  # Groq models: "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", etc.
+  # OpenAI models: "gpt-4", "gpt-3.5-turbo", etc.
+  # Anthropic models: "claude-3-opus", "claude-3-sonnet", etc.
+  model: "llama-3.1-70b-versatile"
+  
+  # API Key (should be set in .env file, not here)
+  # api_key: ""  # Set via GROQ_API_KEY, OPENAI_API_KEY, etc. in .env
+  
+  # Temperature (0.0 to 2.0) - Controls randomness
+  temperature: 0.1
+  
+  # Max tokens for completion (response length limit)
+  max_tokens: 8192
+  
+  # Max tokens for input (context window limit)
+  max_input_tokens: 32768
+  
+  # Top-p sampling (0.0 to 1.0) - Nucleus sampling
+  top_p: 1.0
+  
+  # Frequency penalty (-2.0 to 2.0) - Reduces repetition
+  frequency_penalty: 0.0
+  
+  # Presence penalty (-2.0 to 2.0) - Encourages new topics
+  presence_penalty: 0.0
+  
+  # Timeout in seconds for API calls
+  timeout: 60
+
+# Workflow Configuration
+workflow:
+  # Maximum number of iterations before stopping
+  max_iterations: 50
+  
+  # Maximum number of retries for failed tasks
+  max_retries: 3
+  
+  # Enable debug mode for detailed logging
+  debug: false
+
+# Neo4j Configuration
+neo4j:
+  # Database URI
+  uri: "bolt://localhost:7687"
+  
+  # Username (set via NEO4J_USER in .env)
+  user: "neo4j"
+  
+  # Password (set via NEO4J_PASSWORD in .env)
+  # password: ""  # Set in .env file
+  
+  # Connection timeout in seconds
+  connection_timeout: 30
+  
+  # Maximum connection pool size
+  max_connection_pool_size: 50
+
+# Logging Configuration
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  
+  # Log file path (relative to project root)
+  log_file: "logs/app.log"
+  
+  # Enable console logging
+  console_enabled: true
+  
+  # Enable file logging
+  file_enabled: true
+  
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Agent Configuration
+agent:
+  # Default timeout for agent execution (seconds)
+  default_timeout: 300
+  
+  # Enable agent status tracking
+  enable_status_tracking: true
+  
+  # Enable tool usage tracking
+  enable_tool_tracking: true
+
+# Task Persistence Configuration
+task_persistence:
+  # Enable task persistence to disk
+  enabled: true
+  
+  # Directory to save task files
+  directory: "tasks"
+  
+  # File format: "json" or "yaml"
+  format: "json"
+

@@ -1,13 +1,19 @@
 """File system agent implementation."""
 
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from typing import Any
+from langchain_core.messages import ToolMessage
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, TaskStatus
 from src.models.state import AgentState, UsageStats
+from src.utils.agent_utils import (
+    build_agent_messages,
+    build_task_description,
+    find_pending_task,
+    get_previous_task_results,
+)
 from src.utils.logger import logger
 from src.utils.task_persistence import update_task_file
+from src.utils.token_calculator import track_token_usage
 
 
 class FileSystemAgent(BaseAgent):
@@ -33,16 +39,7 @@ class FileSystemAgent(BaseAgent):
             return state, usage_stats
 
         # Find current task for filesystem agent
-        current_task = None
-        task_index = -1
-        for i, task in enumerate(state.task_list.tasks):
-            if (
-                task.agent == AgentType.FILESYSTEM
-                and task.status == TaskStatus.PENDING
-            ):
-                current_task = task
-                task_index = i
-                break
+        current_task, task_index = find_pending_task(state.task_list, AgentType.FILESYSTEM)
 
         if not current_task:
             logger.warning("No pending FileSystem task found")
@@ -55,50 +52,31 @@ class FileSystemAgent(BaseAgent):
         current_task.status = TaskStatus.IN_PROGRESS
 
         try:
-            # Prepare input for agent
-            task_description = (
-                f"Task: {current_task.description}\n\nUser Request: {state.user_input}"
-            )
-
             # Get previous agent results from completed tasks
-            if state.task_list:
-                previous_results = []
-                for task in state.task_list.tasks:
-                    if task.status.value == "completed" and task.result:
-                        # Include results from neo4j and other relevant agents
-                        if task.agent in [AgentType.NEO4J]:
-                            previous_results.append(
-                                f"Task [{task.agent.value}]: {task.description}\n"
-                                f"Result: {task.result}"
-                            )
-                if previous_results:
-                    task_description += f"\n\nPrevious Task Results:\n" + "\n\n".join(previous_results)
-                else:
-                    # Log warning if no previous results found
-                    logger.warning("No previous task results found for filesystem agent")
-                    # Check if there are completed tasks but with empty results
-                    completed_tasks = [t for t in state.task_list.tasks if t.status.value == "completed"]
-                    if completed_tasks:
-                        logger.warning(f"Found {len(completed_tasks)} completed tasks but results are empty")
-                        for task in completed_tasks:
-                            logger.warning(f"Task {task.agent.value}: result length = {len(task.result) if task.result else 0}")
-
-            # Execute agent using LangGraph cookbook pattern
-            # Step 1: Call LLM with tools bound
-            # Format prompt template to get system message
-            formatted_prompt = self.prompt_template.format_messages(input=task_description)
-            system_content = formatted_prompt[0].content if formatted_prompt else "You are a helpful assistant."
-            messages = [
-                SystemMessage(content=system_content),
-                HumanMessage(content=task_description),
-            ]
+            previous_results = get_previous_task_results(
+                state.task_list, 
+                include_agents=[AgentType.NEO4J]
+            )
+            
+            # Build task description
+            task_description = build_task_description(
+                current_task,
+                state.user_input,
+                previous_results if previous_results else None
+            )
             
             # Log task description for debugging
             logger.debug(f"FileSystem agent task description length: {len(task_description)}")
             logger.debug(f"FileSystem agent task description preview: {task_description[:500]}...")
 
+            # Execute agent using LangGraph cookbook pattern
+            # Step 1: Call LLM with tools bound
+            # Build messages using utility function
+            messages = build_agent_messages(self.prompt_template, task_description)
+
             # Get LLM response (may include tool calls)
             llm_response = self.llm_with_tools.invoke(messages)
+            track_token_usage(llm_response, usage_stats)
             result_text = ""
             tool_calls_executed = False
             
@@ -135,6 +113,7 @@ class FileSystemAgent(BaseAgent):
                 if tool_calls_executed:
                     final_messages = messages + [llm_response] + tool_messages
                     final_response = self.llm_with_tools.invoke(final_messages)
+                    track_token_usage(final_response, usage_stats)
                     result_text = final_response.content if hasattr(final_response, "content") else str(final_response)
                     # Log tool execution results
                     logger.info(f"FileSystem agent executed {len(tool_messages)} tool(s)")

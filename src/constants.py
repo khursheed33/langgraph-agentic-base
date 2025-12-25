@@ -11,7 +11,7 @@ class AgentType(str, Enum):
     PLANNER = "planner"
     NEO4J = "neo4j"
     FILESYSTEM = "filesystem"
-    QUERY = "query"
+    GENERAL_QA = "general_qa"
 
 
 class WorkflowStatus(str, Enum):
@@ -37,14 +37,14 @@ class TaskStatus(str, Enum):
 AGENT_CAPABILITIES: Final[dict[str, str]] = {
     AgentType.NEO4J: "Query and analyze Neo4j graph database. Can retrieve nodes, relationships, and perform graph analysis.",
     AgentType.FILESYSTEM: "Read and write files, create directories, and manage file system operations.",
-    AgentType.QUERY: "Handle general conversational queries, greetings, questions, and provide friendly responses to user inputs.",
+    AgentType.GENERAL_QA: "Handle general conversational queries, greetings, questions, and provide friendly responses to user inputs.",
 }
 
 # Available agents list
 AVAILABLE_AGENTS: Final[list[str]] = [
     AgentType.NEO4J,
     AgentType.FILESYSTEM,
-    AgentType.QUERY,
+    AgentType.GENERAL_QA,
 ]
 
 # End node name

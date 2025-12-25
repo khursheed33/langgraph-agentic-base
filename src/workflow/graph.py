@@ -8,12 +8,14 @@ Following LangGraph cookbook patterns:
 - State uses TypedDict for LangGraph compatibility
 - Nodes return dict updates (not full state objects)
 - StateGraph merges updates automatically
+- Uses checkpointers for state persistence and conversation history
 """
 
 import os
-from typing import Any
+from typing import Any, Optional
 
 from langchain_core.runnables.graph import CurveStyle
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from src.agents.registry import (
@@ -24,21 +26,30 @@ from src.agents.registry import (
 from src.constants import AgentType, END_NODE
 from src.models.state import AgentState
 from src.models.state_typed import AgentStateTyped
+from src.utils.checkpoint import get_checkpointer
 from src.utils.logger import logger
 from langgraph.graph.state import CompiledStateGraph
 
 
-def create_workflow() -> Any:
+def create_workflow(checkpointer: Optional[MemorySaver] = None) -> Any:
     """Create and configure the LangGraph workflow with dynamic routing.
 
     The workflow is compiled here. All agents are dynamically discovered from
     the agent registry, and routing is built dynamically based on available agents.
     No hardcoded routing logic is used.
 
+    Args:
+        checkpointer: Optional MemorySaver instance for state persistence.
+                     If None, creates a new one.
+
     Returns:
         Compiled LangGraph application ready to be invoked.
     """
     logger.info("Creating LangGraph workflow with dynamic agent discovery...")
+
+    # Use singleton checkpointer if not provided
+    if checkpointer is None:
+        checkpointer = get_checkpointer()
 
     # Create StateGraph with TypedDict state (LangGraph cookbook pattern)
     workflow = StateGraph[AgentStateTyped, None, AgentStateTyped, AgentStateTyped](AgentStateTyped)
@@ -65,6 +76,7 @@ def create_workflow() -> Any:
                 usage_stats=state.get("usage_stats") or AgentState(user_input="").usage_stats,
                 final_result=state.get("final_result"),
                 error=state.get("error"),
+                conversation_history=state.get("conversation_history", []),
             )
             usage_stats = agent_state.usage_stats
 
@@ -98,6 +110,26 @@ def create_workflow() -> Any:
             new_messages = [msg for msg in updated_state.messages if msg not in current_messages]
             if new_messages:
                 updates["messages"] = new_messages
+
+            # Conversation history - append user input and final result if workflow ends
+            if updated_state.final_result and updated_state.current_agent == END_NODE:
+                # Add to conversation history when workflow completes
+                conversation_entry = {
+                    "user_input": updated_state.user_input,
+                    "result": updated_state.final_result,
+                    "messages": updated_state.messages[-10:],  # Last 10 messages for context
+                }
+                current_history = state.get("conversation_history", [])
+                # Check if this entry already exists (avoid duplicates)
+                entry_exists = any(
+                    entry.get("user_input") == conversation_entry["user_input"] 
+                    and entry.get("result") == conversation_entry["result"]
+                    for entry in current_history
+                )
+                if not entry_exists:
+                    # Use operator.add pattern - return list with new entry to append
+                    # LangGraph will merge this with existing history using operator.add
+                    updates["conversation_history"] = [conversation_entry]
 
             return updates
 
@@ -152,8 +184,9 @@ def create_workflow() -> Any:
             workflow.add_edge(agent_type, AgentType.SUPERVISOR.value)
             logger.debug(f"Added edge: {agent_type} -> supervisor")
 
-    # Compile workflow - this is where the graph is compiled into an executable app
-    app: CompiledStateGraph = workflow.compile()
+    # Compile workflow with checkpointer for state persistence
+    # This enables conversation history and state management across invocations
+    app: CompiledStateGraph = workflow.compile(checkpointer=checkpointer)
     # Render the graph png file
     try:
         # Create the visualizations directory if it doesn't exist

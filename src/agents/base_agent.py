@@ -1,7 +1,6 @@
 """Base agent class."""
 
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any
 
 from langchain_core.messages import BaseMessage
@@ -11,6 +10,7 @@ from langchain_core.tools import BaseTool
 from src.llm import get_llm
 from src.models.state import AgentState, UsageStats
 from src.utils.logger import logger
+from src.utils.prompt_utils import load_prompt_template
 
 
 class BaseAgent(ABC):
@@ -20,22 +20,8 @@ class BaseAgent(ABC):
         """Initialize the agent."""
         self.agent_name = agent_name
         self.llm = get_llm()
-        self.prompt_template = self._load_prompt()
+        self.prompt_template = load_prompt_template(agent_name)
         self.tools = self._load_tools()
-
-    def _load_prompt(self) -> ChatPromptTemplate:
-        """Load prompt from markdown file."""
-        prompt_file = Path(f"src/agents/{self.agent_name}/prompt.md")
-        if not prompt_file.exists():
-            logger.warning(f"Prompt file not found: {prompt_file}")
-            return ChatPromptTemplate.from_messages(
-                [("system", "You are a helpful assistant.")]
-            )
-
-        prompt_content = prompt_file.read_text(encoding="utf-8")
-        return ChatPromptTemplate.from_messages(
-            [("system", prompt_content), ("human", "{input}")]
-        )
 
     def _load_tools(self) -> list[BaseTool]:
         """Load tools from tools directory."""

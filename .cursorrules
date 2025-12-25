@@ -7,3 +7,4 @@
 - Define Pydantic schemas in app/schemas/; use dependency injection for DB/security.
 - Always activate venv before executing any command
 - import always should start with app.subfolder.file
+- Must follow clean and meaningful naming conventions e.g: `state.py` is not good it should be `workflow_state.py` or `app_state.py`, same `status.py` is not good name.

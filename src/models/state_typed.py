@@ -25,4 +25,5 @@ class AgentStateTyped(TypedDict, total=False):
     usage_stats: UsageStats
     final_result: Optional[str]
     error: Optional[str]
+    conversation_history: Annotated[list[dict[str, Any]], operator.add]
 

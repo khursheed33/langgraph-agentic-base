@@ -1,0 +1,64 @@
+# Agent Configuration
+# This file defines all available agents and their metadata
+# Used by supervisor and planner to dynamically discover agents
+
+agents:
+  # Core system agents (always available)
+  planner:
+    name: planner
+    description: Creates a task plan based on user intent and available agent capabilities
+    capabilities:
+      - Analyze user input to understand requirements
+      - Break down requests into sequential tasks
+      - Assign tasks to appropriate agents
+      - Create logical task execution order
+    use_cases:
+      - Task planning
+      - Breaking down complex requests
+      - Creating execution plans
+
+  # Available task agents
+  neo4j:
+    name: neo4j
+    description: Query and analyze Neo4j graph database. Can build Cypher queries from user input, execute them, and format results.
+    capabilities:
+      - Query Neo4j graph database
+      - Retrieve nodes, relationships, and perform graph analysis
+      - Build Cypher queries from user input
+      - Execute queries and format results
+      - Graph analysis operations
+    use_cases:
+      - Database queries
+      - Graph analysis
+      - Node/relationship retrieval
+      - Building and executing queries
+
+  filesystem:
+    name: filesystem
+    description: Read and write files, create directories, and manage file system operations.
+    capabilities:
+      - Read files from the file system
+      - Write content to files
+      - Create directories
+      - Check if files or directories exist
+      - List directory contents
+    use_cases:
+      - Reading files
+      - Writing files
+      - Creating directories
+      - File management
+
+  general_qa:
+    name: general_qa
+    description: Handle general conversational queries, greetings, questions, and provide friendly responses to user inputs.
+    capabilities:
+      - Respond to greetings and casual conversation
+      - Answer general questions
+      - Provide helpful information about system capabilities
+      - Engage in friendly conversation
+    use_cases:
+      - Greetings
+      - Casual conversation
+      - General questions
+      - Conversational responses that don't require specific agent actions
+
