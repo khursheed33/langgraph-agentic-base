@@ -4,7 +4,7 @@ from langchain_core.output_parsers import JsonOutputParser
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, END_NODE
-from src.models.state import AgentState, UsageStats
+from src.models.workflow_state import AgentState, UsageStats
 from src.models.supervisor import SupervisorDecision
 from src.utils.context_utils import build_supervisor_context
 from src.utils.logger import logger

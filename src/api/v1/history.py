@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from src.api.schemas.responses import HistoryResponse
+from src.api.schemas.history_response import HistoryResponse
 from src.api.utils import get_workflow_state
 from src.utils.logger import logger
 

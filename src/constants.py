@@ -12,6 +12,7 @@ class AgentType(str, Enum):
     NEO4J = "neo4j"
     FILESYSTEM = "filesystem"
     GENERAL_QA = "general_qa"
+    MATHEMATICS = "mathematics"
 
 
 class WorkflowStatus(str, Enum):
@@ -38,6 +39,7 @@ AGENT_CAPABILITIES: Final[dict[str, str]] = {
     AgentType.NEO4J: "Query and analyze Neo4j graph database. Can retrieve nodes, relationships, and perform graph analysis.",
     AgentType.FILESYSTEM: "Read and write files, create directories, and manage file system operations.",
     AgentType.GENERAL_QA: "Handle general conversational queries, greetings, questions, and provide friendly responses to user inputs.",
+    AgentType.MATHEMATICS: "Perform mathematical calculations, solve equations, and provide mathematical problem-solving capabilities.",
 }
 
 # Available agents list
@@ -45,6 +47,7 @@ AVAILABLE_AGENTS: Final[list[str]] = [
     AgentType.NEO4J,
     AgentType.FILESYSTEM,
     AgentType.GENERAL_QA,
+    AgentType.MATHEMATICS,
 ]
 
 # End node name

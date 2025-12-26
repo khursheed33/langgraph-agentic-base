@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 
-from src.models.state import Task
+from src.models.workflow_state import Task
 
 
 class PlannerOutput(BaseModel):

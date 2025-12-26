@@ -24,7 +24,7 @@ from src.agents.registry import (
     get_routing_map,
 )
 from src.constants import AgentType, END_NODE
-from src.models.state import AgentState
+from src.models.workflow_state import AgentState
 from src.models.state_typed import AgentStateTyped
 from src.utils.checkpoint import get_checkpointer
 from src.utils.logger import logger

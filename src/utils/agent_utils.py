@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.constants import AgentType, TaskStatus
-from src.models.state import AgentState, Task, TaskList
+from src.models.workflow_state import AgentState, Task, TaskList
 
 
 def find_pending_task(

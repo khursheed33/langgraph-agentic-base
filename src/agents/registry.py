@@ -9,11 +9,12 @@ from typing import Callable, Type
 from src.agents.base_agent import BaseAgent
 from src.agents.filesystem.filesystem_agent import FileSystemAgent
 from src.agents.general_qa.general_qa_agent import GeneralQAAgent
+from src.agents.mathematics.mathematics_agent import MathematicsAgent
 from src.agents.neo4j.neo4j_agent import Neo4jAgent
 from src.agents.planner.planner_agent import PlannerAgent
 from src.agents.supervisor.supervisor_agent import SupervisorAgent
 from src.constants import AgentType, AVAILABLE_AGENTS, END_NODE
-from src.models.state import AgentState, UsageStats
+from src.models.workflow_state import AgentState, UsageStats
 from src.utils.logger import logger
 
 # Agent registry mapping agent types to their classes
@@ -23,6 +24,7 @@ AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {
     AgentType.NEO4J: Neo4jAgent,
     AgentType.FILESYSTEM: FileSystemAgent,
     AgentType.GENERAL_QA: GeneralQAAgent,
+    AgentType.MATHEMATICS: MathematicsAgent,
 }
 
 # Agent instances cache (singleton pattern per agent type)

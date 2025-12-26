@@ -8,7 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import BaseTool
 
 from src.llm import get_llm
-from src.models.state import AgentState, UsageStats
+from src.models.workflow_state import AgentState, UsageStats
 from src.utils.logger import logger
 from src.utils.prompt_utils import load_prompt_template
 

@@ -4,7 +4,7 @@ from langchain_core.messages import ToolMessage
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType, TaskStatus
-from src.models.state import AgentState, UsageStats
+from src.models.workflow_state import AgentState, UsageStats
 from src.utils.agent_utils import (
     build_agent_messages,
     build_task_description,

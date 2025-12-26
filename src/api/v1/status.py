@@ -4,13 +4,11 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
-from src.api.schemas.responses import (
-    AgentStatusResponse,
-    ErrorResponse,
-    StatusResponse,
-    TaskResponse,
-    ToolStatusResponse,
-)
+from src.api.schemas.agent_status_response import AgentStatusResponse
+from src.api.schemas.error_response import ErrorResponse
+from src.api.schemas.status_response import StatusResponse
+from src.api.schemas.task_response import TaskResponse
+from src.api.schemas.tool_status_response import ToolStatusResponse
 from src.api.utils import (
     get_all_agent_status,
     get_all_tool_status,

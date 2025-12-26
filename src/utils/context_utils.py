@@ -1,7 +1,7 @@
 """Utility functions for building context strings."""
 
 from src.constants import AgentType
-from src.models.state import AgentState
+from src.models.workflow_state import AgentState
 
 
 def build_supervisor_context(state: AgentState) -> str:

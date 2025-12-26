@@ -1,4 +1,4 @@
-"""State models for LangGraph."""
+"""Workflow state models for LangGraph."""
 
 from typing import Any, Optional
 
@@ -98,7 +98,7 @@ class UsageStats(BaseModel):
         self.tool_usage[tool_name] = self.tool_usage.get(tool_name, 0) + 1
 
 
-class AgentState(BaseModel):
+class WorkflowState(BaseModel):
     """State managed by LangGraph StateGraph."""
 
     user_input: str = Field(..., description="Current user input")
@@ -121,4 +121,8 @@ class AgentState(BaseModel):
     conversation_history: list[dict[str, Any]] = Field(
         default_factory=list, description="Full conversation history across sessions"
     )
+
+
+# Alias for backward compatibility - will be removed in future versions
+AgentState = WorkflowState
 

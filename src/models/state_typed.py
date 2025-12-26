@@ -8,7 +8,7 @@ from typing import Any, Optional
 from typing_extensions import Annotated, TypedDict
 import operator
 
-from src.models.state import TaskList, UsageStats
+from src.models.workflow_state import TaskList, UsageStats
 
 
 class AgentStateTyped(TypedDict, total=False):

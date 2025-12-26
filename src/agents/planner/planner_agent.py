@@ -6,7 +6,7 @@ from langchain_core.output_parsers import JsonOutputParser
 
 from src.agents.base_agent import BaseAgent
 from src.constants import AgentType
-from src.models.state import AgentState, TaskList, UsageStats
+from src.models.workflow_state import AgentState, TaskList, UsageStats
 from src.models.planner import PlannerOutput
 from src.utils.json_utils import extract_json_from_text
 from src.utils.logger import logger

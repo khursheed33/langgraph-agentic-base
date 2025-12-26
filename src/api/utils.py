@@ -3,7 +3,7 @@
 from typing import Any, Optional
 
 from src.agents.registry import get_agent, get_available_agent_types
-from src.models.state import AgentState, TaskList
+from src.models.workflow_state import AgentState, TaskList
 from src.utils.checkpoint import get_checkpointer
 from src.workflow import create_workflow
 

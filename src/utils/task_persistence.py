@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from src.models.state import AgentState, TaskList
+from src.models.workflow_state import AgentState, TaskList
 from src.utils.logger import logger
 
 

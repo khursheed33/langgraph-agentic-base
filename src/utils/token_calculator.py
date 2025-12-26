@@ -8,7 +8,7 @@ from src.utils.logger import logger
 from src.utils.settings import settings
 
 if TYPE_CHECKING:
-    from src.models.state import UsageStats
+    from src.models.workflow_state import UsageStats
 
 
 class TokenUsage(BaseModel):

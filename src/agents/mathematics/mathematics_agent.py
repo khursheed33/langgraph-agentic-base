@@ -1,4 +1,4 @@
-"""File system agent implementation."""
+"""Mathematics agent implementation for mathematical calculations and problem solving."""
 
 from langchain_core.messages import ToolMessage
 
@@ -9,19 +9,18 @@ from src.utils.agent_utils import (
     build_agent_messages,
     build_task_description,
     find_pending_task,
-    get_previous_task_results,
 )
 from src.utils.logger import logger
 from src.utils.task_persistence import update_task_file
 from src.utils.token_calculator import track_token_usage
 
 
-class FileSystemAgent(BaseAgent):
-    """File system agent."""
+class MathematicsAgent(BaseAgent):
+    """Mathematics agent for handling mathematical calculations and problem solving."""
 
     def __init__(self) -> None:
-        """Initialize file system agent."""
-        super().__init__("filesystem")
+        """Initialize mathematics agent."""
+        super().__init__("mathematics")
         # Bind tools to LLM (LangGraph cookbook pattern)
         self.tools_by_name = {tool.name: tool for tool in self.tools}
         self.llm_with_tools = self.llm.bind_tools(self.tools) if self.tools else self.llm
@@ -29,22 +28,22 @@ class FileSystemAgent(BaseAgent):
     def execute(
         self, state: AgentState, usage_stats: UsageStats
     ) -> tuple[AgentState, UsageStats]:
-        """Execute file system agent task."""
-        logger.info("File system agent executing...")
-        usage_stats.increment_agent_usage("filesystem")
+        """Execute mathematics agent task."""
+        logger.info("Mathematics agent executing...")
+        usage_stats.increment_agent_usage("mathematics")
 
         if not state.task_list:
             logger.error("No task list available")
             state.error = "No task list available"
             return state, usage_stats
 
-        # Find current task for filesystem agent
-        current_task, task_index = find_pending_task(state.task_list, AgentType.FILESYSTEM)
+        # Find current task for mathematics agent
+        current_task, task_index = find_pending_task(state.task_list, AgentType.MATHEMATICS)
 
         if not current_task:
-            logger.warning("No pending FileSystem task found")
+            logger.warning("No pending Mathematics task found")
             state.messages.append(
-                {"role": "filesystem", "content": "No pending task for FileSystem agent"}
+                {"role": "mathematics", "content": "No pending task for Mathematics agent"}
             )
             return state, usage_stats
 
@@ -52,28 +51,14 @@ class FileSystemAgent(BaseAgent):
         current_task.status = TaskStatus.IN_PROGRESS
 
         try:
-            # Get previous agent results from completed tasks
-            previous_results = get_previous_task_results(
-                state.task_list, 
-                include_agents=[AgentType.NEO4J]
-            )
-            
             # Build task description
-            task_description = build_task_description(
-                current_task,
-                state.user_input,
-                previous_results if previous_results else None
-            )
+            task_description = build_task_description(current_task, state.user_input)
             
-            # Log task description for debugging
-            logger.debug(f"FileSystem agent task description length: {len(task_description)}")
-            logger.debug(f"FileSystem agent task description preview: {task_description[:500]}...")
-
             # Execute agent using LangGraph cookbook pattern
             # Step 1: Call LLM with tools bound
             # Build messages using utility function
             messages = build_agent_messages(self.prompt_template, task_description)
-
+            
             # Get LLM response (may include tool calls)
             llm_response = self.llm_with_tools.invoke(messages)
             track_token_usage(llm_response, usage_stats)
@@ -115,30 +100,32 @@ class FileSystemAgent(BaseAgent):
                     final_response = self.llm_with_tools.invoke(final_messages)
                     track_token_usage(final_response, usage_stats)
                     result_text = final_response.content if hasattr(final_response, "content") else str(final_response)
-                    # Log tool execution results
-                    logger.info(f"FileSystem agent executed {len(tool_messages)} tool(s)")
-                    for tool_msg in tool_messages:
-                        logger.debug(f"Tool result: {str(tool_msg.content)[:200]}...")
+                    # If final response is empty or just whitespace, use tool results formatted
+                    if not result_text or not result_text.strip():
+                        logger.warning("LLM final response is empty, formatting tool results directly")
+                        # Format tool results as markdown
+                        formatted_results = []
+                        for tool_msg in tool_messages:
+                            formatted_results.append(f"## Calculation Results\n\n{tool_msg.content}")
+                        result_text = "\n\n".join(formatted_results)
                 else:
                     result_text = llm_response.content if hasattr(llm_response, "content") else str(llm_response)
-                    logger.warning("FileSystem agent did not execute any tools - LLM may not have called write_file")
             else:
                 # No tool calls, use LLM response directly
                 result_text = llm_response.content if hasattr(llm_response, "content") else str(llm_response)
-                logger.warning("FileSystem agent LLM did not make tool calls - may need to call write_file tool")
 
             # Ensure result_text is not empty
             if not result_text or not result_text.strip():
-                logger.error("FileSystem agent result text is empty")
-                result_text = "Error: FileSystem agent did not complete the task"
+                logger.error("Result text is empty after Mathematics agent execution")
+                result_text = "Error: No results generated from mathematical calculation"
 
             # Log result text length for debugging
-            logger.debug(f"FileSystem agent result text length: {len(result_text)} characters")
+            logger.debug(f"Mathematics agent result text length: {len(result_text)} characters")
 
             # Mark task as completed
             state.task_list.mark_task_completed(task_index, result_text)
 
-            logger.info(f"FileSystem task completed: {current_task.description}")
+            logger.info(f"Mathematics task completed: {current_task.description}")
 
             # Update task file
             update_task_file(state)
@@ -146,15 +133,17 @@ class FileSystemAgent(BaseAgent):
             # Add message to state
             state.messages.append(
                 {
-                    "role": "filesystem",
+                    "role": "mathematics",
                     "content": f"Completed task: {current_task.description}\nResult: {result_text}",
                 }
             )
 
         except Exception as e:
-            logger.error(f"FileSystem agent error: {e}")
+            logger.error(f"Mathematics agent error: {e}")
+            import traceback
+            logger.error(f"Mathematics traceback: {traceback.format_exc()}")
             state.task_list.mark_task_failed(task_index, str(e))
-            state.error = f"FileSystem agent error: {str(e)}"
+            state.error = f"Mathematics agent error: {str(e)}"
 
         return state, usage_stats
 

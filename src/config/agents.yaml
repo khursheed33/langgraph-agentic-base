@@ -62,3 +62,21 @@ agents:
       - General questions
       - Conversational responses that don't require specific agent actions
 
+  mathematics:
+    name: mathematics
+    description: Perform mathematical calculations, solve equations, and provide mathematical problem-solving capabilities.
+    capabilities:
+      - Perform arithmetic calculations (addition, subtraction, multiplication, division)
+      - Solve algebraic equations and expressions
+      - Evaluate mathematical expressions and formulas
+      - Handle complex mathematical operations (exponents, roots, logarithms, trigonometric functions)
+      - Provide step-by-step solutions when appropriate
+      - Explain mathematical concepts and reasoning
+      - Work with numerical data and perform statistical calculations
+    use_cases:
+      - Mathematical calculations
+      - Solving equations
+      - Evaluating expressions
+      - Mathematical problem solving
+      - Numerical computations
+

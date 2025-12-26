@@ -11,8 +11,9 @@ from rich.table import Table
 from rich.text import Text
 from rich.syntax import Syntax
 
-from src.models.state import AgentState
+from src.models.workflow_state import AgentState
 from src.models.state_typed import AgentStateTyped
+from src.utils.agent_metadata import get_agent_metadata_loader
 from src.utils.logger import logger
 from src.utils.settings import settings
 from src.workflow import create_workflow
@@ -21,17 +22,51 @@ console = Console()
 
 
 def display_welcome() -> None:
-    """Display welcome message."""
+    """Display welcome message with dynamically loaded agents."""
+    # Load agent metadata dynamically
+    loader = get_agent_metadata_loader()
+    
+    # Build agent list
+    agent_lines = [
+        "• Supervisor Agent - Routes tasks intelligently",
+        "• Planner Agent - Creates execution plans",
+    ]
+    
+    # Add other agents dynamically (exclude supervisor and planner)
+    other_agents = loader.get_available_agents(exclude=["supervisor", "planner"])
+    
+    # Format agent names nicely (capitalize and add spaces)
+    def format_agent_name(name: str) -> str:
+        """Format agent name for display (e.g., 'general_qa' -> 'General QA', 'neo4j' -> 'Neo4j')."""
+        # Handle special cases
+        special_cases = {
+            "qa": "QA",
+            "neo4j": "Neo4j",
+        }
+        
+        # Split by underscore and format each word
+        words = name.split("_")
+        formatted_words = []
+        for word in words:
+            if word.lower() in special_cases:
+                formatted_words.append(special_cases[word.lower()])
+            else:
+                formatted_words.append(word.capitalize())
+        
+        return " ".join(formatted_words)
+    
+    # Sort agents alphabetically for consistent display
+    for agent_name in sorted(other_agents.keys()):
+        agent_meta = other_agents[agent_name]
+        formatted_name = format_agent_name(agent_meta.name)
+        agent_lines.append(f"• {formatted_name} Agent - {agent_meta.description}")
+    
     welcome_text = """
     [bold cyan]LangGraph Agentic Base[/bold cyan]
     
     A LangGraph-based multi-agent system with:
-    • Supervisor Agent - Routes tasks intelligently
-    • Planner Agent - Creates execution plans
-    • Neo4j Agent - Database operations and query building
-    • File System Agent - File operations
-    • Query Agent - Handles greetings and general questions
-    """
+    """ + "\n    ".join(agent_lines)
+    
     console.print(Panel(welcome_text, title="Welcome", border_style="cyan"))
 
 
