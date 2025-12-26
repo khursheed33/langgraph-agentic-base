@@ -64,10 +64,39 @@ langgraph-agentic-base/
 ### Prerequisites
 
 - Python 3.12 or higher
-- Groq API key
+- Groq API key (or OpenAI/Anthropic API key)
 - (Optional) Neo4j database for Neo4j agent
 
-### Setup
+### Docker Installation (Recommended)
+
+For the easiest setup using Docker, see **[startup.md](startup.md)** and **[deployment/README.md](deployment/README.md)** for complete instructions.
+
+Quick start:
+```bash
+# 1. Copy environment file
+cp .env.example .env
+
+# 2. Edit .env and add your API keys
+# At minimum, set: GROQ_API_KEY=your_key_here
+
+# 3. Start dependencies first
+cd deployment
+docker-compose -f docker-compose.dependencies.yml up -d
+
+# 4. Start the application
+docker-compose -f docker-compose.yml up -d
+
+# 5. Access API at http://localhost:3301
+```
+
+**Note:** All Docker-related files are in the `deployment/` folder:
+- `deployment/Dockerfile` - Application Docker image
+- `deployment/docker-compose.yml` - Main application service
+- `deployment/docker-compose.dependencies.yml` - Dependencies (Neo4j, etc.)
+
+Docker Compose automatically reads the `.env` file from the project root. See [startup.md](startup.md) and [deployment/README.md](deployment/README.md) for detailed Docker setup instructions.
+
+### Local Development Setup
 
 1. Clone the repository:
 ```bash
@@ -86,7 +115,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
 ```
 
-4. Create a `.env` file from `.env.example`:
+4. Create a `.env` file:
 ```bash
 cp .env.example .env
 ```
@@ -215,13 +244,28 @@ The project follows Python best practices:
 
 ### Environment Variables
 
-- `GROQ_API_KEY`: Required. Your Groq API key
-- `GROQ_MODEL`: Optional. Default: `llama-3.1-70b-versatile`
-- `NEO4J_URI`: Optional. Default: `bolt://localhost:7687`
-- `NEO4J_USER`: Optional. Default: `neo4j`
-- `NEO4J_PASSWORD`: Optional. Required if using Neo4j agent
-- `LOG_LEVEL`: Optional. Default: `INFO`
-- `MAX_ITERATIONS`: Optional. Default: `50`
+Docker Compose automatically reads environment variables from the `.env` file in the project root. You can also set them as shell environment variables (which take precedence).
+
+**LLM Configuration** (at least one required):
+- `GROQ_API_KEY`: Your Groq API key
+- `OPENAI_API_KEY`: Your OpenAI API key
+- `ANTHROPIC_API_KEY`: Your Anthropic API key
+
+**Neo4j Configuration**:
+- `NEO4J_URI`: Default: `bolt://neo4j:7687` (use `bolt://neo4j:7687` for Docker)
+- `NEO4J_USER`: Default: `neo4j`
+- `NEO4J_PASSWORD`: Default: `password` (change in production!)
+- `NEO4J_AUTH`: Format: `username/password`, Default: `neo4j/password`
+
+**API Configuration**:
+- `API_HOST`: Default: `0.0.0.0`
+- `API_PORT`: Default: `3301`
+
+**Other**:
+- `LOG_LEVEL`: Default: `INFO`
+- `MAX_ITERATIONS`: Default: `50`
+
+See [startup.md](startup.md) for detailed Docker setup instructions.
 
 ## Troubleshooting
 
