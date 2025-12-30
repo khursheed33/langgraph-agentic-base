@@ -8,3 +8,5 @@
 - Always activate venv before executing any command
 - import always should start with app.subfolder.file
 - Must follow clean and meaningful naming conventions e.g: `state.py` is not good it should be `workflow_state.py` or `app_state.py`, same `status.py` is not good name.
+- must use absolute imports like: `from app.subfolder.file import Xyz`
+- Always put constant string and messages in constant file.

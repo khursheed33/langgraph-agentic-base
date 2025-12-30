@@ -2,10 +2,11 @@
 
 from typing import Any, Optional
 
-from src.agents.registry import get_agent, get_available_agent_types
-from src.models.workflow_state import AgentState, TaskList
-from src.utils.checkpoint import get_checkpointer
-from src.workflow import create_workflow
+from app.agents.registry import get_agent, get_available_agent_types
+from app.models.tool_status import ToolStatus, TaskStatusInfo
+from app.models.workflow_state import AgentState, TaskList
+from app.utils.checkpoint import get_checkpointer
+from app.workflow import create_workflow
 
 
 def get_all_agent_status(usage_stats: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
@@ -34,19 +35,19 @@ def get_all_agent_status(usage_stats: Optional[dict[str, Any]] = None) -> list[d
     return agent_statuses
 
 
-def get_all_tool_status(usage_stats: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+def get_all_tool_status(usage_stats: Optional[dict[str, Any]] = None) -> list[ToolStatus]:
     """Get status for all tools across all agents.
-    
+
     Args:
         usage_stats: Optional usage statistics dict with tool_usage counts.
-        
+
     Returns:
-        List of tool status dictionaries.
+        List of tool status models.
     """
     tool_statuses = {}
     usage_stats = usage_stats or {}
     tool_usage = usage_stats.get("tool_usage", {})
-    
+
     # Collect all tools from all agents
     for agent_type in get_available_agent_types():
         try:
@@ -54,13 +55,13 @@ def get_all_tool_status(usage_stats: Optional[dict[str, Any]] = None) -> list[di
             for tool in agent.tools:
                 tool_name = tool.name
                 if tool_name not in tool_statuses:
-                    tool_statuses[tool_name] = {
-                        "tool_name": tool_name,
-                        "usage_count": tool_usage.get(tool_name, 0),
-                    }
+                    tool_statuses[tool_name] = ToolStatus(
+                        tool_name=tool_name,
+                        usage_count=tool_usage.get(tool_name, 0),
+                    )
         except Exception:
             continue
-    
+
     return list(tool_statuses.values())
 
 
@@ -132,13 +133,13 @@ def get_current_task(state: Optional[dict[str, Any]]) -> Optional[dict[str, Any]
         
         # Only return if required fields are present
         if agent and description and status:
-            return {
-                "agent": str(agent),
-                "description": str(description),
-                "status": str(status),
-                "result": getattr(task, "result", None) if not isinstance(task, dict) else task.get("result"),
-                "error": getattr(task, "error", None) if not isinstance(task, dict) else task.get("error"),
-            }
+            return TaskStatusInfo(
+                agent=str(agent),
+                description=str(description),
+                status=str(status),
+                result=getattr(task, "result", None) if not isinstance(task, dict) else task.get("result"),
+                error=getattr(task, "error", None) if not isinstance(task, dict) else task.get("error"),
+            )
     
     return None
 

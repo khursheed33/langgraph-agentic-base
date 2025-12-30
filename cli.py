@@ -11,12 +11,12 @@ from rich.table import Table
 from rich.text import Text
 from rich.syntax import Syntax
 
-from src.models.workflow_state import AgentState
-from src.models.state_typed import AgentStateTyped
-from src.utils.agent_metadata import get_agent_metadata_loader
-from src.utils.logger import logger
-from src.utils.settings import settings
-from src.workflow import create_workflow
+from app.models.workflow_state import AgentState
+from app.models.state_typed import AgentStateTyped
+from app.utils.agent_metadata import get_agent_metadata_loader
+from app.utils.logger import logger
+from app.utils.settings import settings
+from app.workflow import create_workflow
 
 console = Console()
 

@@ -127,8 +127,8 @@ LangGraph merges updates
 To verify compatibility:
 
 ```python
-from src.workflow import create_workflow
-from src.models.state_typed import AgentStateTyped
+from app.workflow import create_workflow
+from app.models.state_typed import AgentStateTyped
 
 app = create_workflow()
 

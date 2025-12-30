@@ -74,7 +74,7 @@ async def fetch_data(url: str) -> Dict[str, Any]:
 
 ### 3. Imports
 
-- **All imports must start with `src.subfolder.file`**
+- **All imports must start with `app.subfolder.file`**
 - Use absolute imports, not relative imports
 - Group imports: standard library, third-party, local
 
@@ -85,8 +85,8 @@ from typing import Optional
 from pydantic import BaseModel
 from langchain_core.tools import BaseTool
 
-from src.utils.logger import logger
-from src.models.state import AgentState
+from app.utils.logger import logger
+from app.models.state import AgentState
 ```
 
 ### 4. Error Handling
@@ -110,13 +110,13 @@ except Exception as e:
 
 ### 5. Logging
 
-- Use the singleton logger from `src.utils.logger`
+- Use the singleton logger from `app.utils.logger`
 - Log all important operations
 - Use appropriate log levels (DEBUG, INFO, WARNING, ERROR)
 - Include context in log messages
 
 ```python
-from src.utils.logger import logger
+from app.utils.logger import logger
 
 logger.info(f"Processing task: {task_id}")
 logger.error(f"Failed to process task {task_id}: {error}")
@@ -130,7 +130,7 @@ logger.error(f"Failed to process task {task_id}: {error}")
 - Configuration is loaded from `.env` file via dynaconf
 
 ```python
-from src.utils.settings import settings
+from app.utils.settings import settings
 
 api_key = settings.GROQ_API_KEY
 model = settings.GROQ_MODEL
