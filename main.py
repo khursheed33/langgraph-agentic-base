@@ -9,8 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.config import load_api_config
+from app.services.auth_service import initialize_auth_service
+from app.services.user_service import initialize_user_service
 from app.services.workflow_service import run_workflow
 from app.utils.logger import logger
+from app.utils.settings import settings
 
 
 def create_app() -> FastAPI:
@@ -19,6 +22,16 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application instance.
     """
+    # Initialize authentication and user services
+    logger.info("Initializing authentication service...")
+    initialize_auth_service(settings.JWT_SECRET_KEY)
+    
+    logger.info("Initializing user service...")
+    initialize_user_service()
+
+    # Initialize default admin user
+    _initialize_default_admin()
+
     # Load API configuration
     api_config = load_api_config()
 
@@ -62,6 +75,44 @@ def create_app() -> FastAPI:
     return app
 
 
+def _initialize_default_admin() -> None:
+    """Initialize default admin user if not exists.
+    
+    Creates admin user with credentials: admin / Admin@123
+    """
+    try:
+        from app.services.user_service import get_user_service
+
+        user_service = get_user_service()
+        
+        # Check if admin already exists
+        admin_user = user_service.get_user_by_username("admin")
+        if admin_user:
+            logger.info("Admin user already exists")
+            return
+
+        # Create default admin user
+        admin = user_service.create_user(
+            username="admin",
+            email="admin@localhost",
+            password="Admin@123",
+            full_name="System Administrator",
+            role="admin",
+        )
+
+        if admin:
+            logger.info(f"✓ Created default admin user (ID: {admin.user_id})")
+            logger.info("  Username: admin")
+            logger.info("  Password: Admin@123")
+            logger.warning("  ⚠ IMPORTANT: Change admin password immediately in production!")
+        else:
+            logger.error("Failed to create default admin user")
+
+    except Exception as e:
+        logger.warning(f"Could not initialize admin user: {e}")
+        logger.info("  Make sure Neo4j is running and properly configured")
+
+
 def run_api() -> None:
     """Run the FastAPI server."""
     # Load API configuration
@@ -71,6 +122,7 @@ def run_api() -> None:
 
     logger.info(f"Starting API server on {api_config['host']}:{api_config['port']}")
     logger.info(f"API documentation available at http://{api_config['host']}:{api_config['port']}/docs")
+    logger.info(f"Login at: http://{api_config['host']}:{api_config['port']}/api/v1/docs")
 
     uvicorn.run(
         app,

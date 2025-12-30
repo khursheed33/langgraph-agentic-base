@@ -21,7 +21,8 @@ _WORKFLOW_APP = create_workflow(get_checkpointer())
 async def run_workflow(
     user_input: str,
     thread_id: Optional[str] = None,
-    guardrail_config: Optional[GuardrailConfig] = None
+    guardrail_config: Optional[GuardrailConfig] = None,
+    bypass_guardrails: bool = False,
 ) -> dict:
     """Run the workflow with user input and optional thread_id for conversation history.
 
@@ -29,35 +30,39 @@ async def run_workflow(
         user_input: User's input/query.
         thread_id: Optional thread ID for conversation continuity. If None, creates new thread.
         guardrail_config: Optional guardrail configuration. If None, uses default config.
+        bypass_guardrails: If True, skip guardrail checks (admin only).
 
     Returns:
         Dictionary with workflow result and metadata.
     """
-    logger.info(f"Starting workflow with input: {user_input}")
+    logger.info(f"Starting workflow with input: {user_input} (bypass_guardrails={bypass_guardrails})")
 
     # Initialize guardrails
     if guardrail_config is None:
         guardrail_config = load_guardrail_config()  # Load from config file
     guardrail_manager = GuardrailManager(guardrail_config)
 
-    # Check input guardrails
-    input_results = await guardrail_manager.check_input(user_input)
-    failed_guardrails = [result for result in input_results if not result.passed]
+    # Check input guardrails unless bypassed by admin user
+    if not bypass_guardrails:
+        input_results = await guardrail_manager.check_input(user_input)
+        failed_guardrails = [result for result in input_results if not result.passed]
 
-    if failed_guardrails:
-        # Return early with guardrail failure
-        failed_result = failed_guardrails[0]  # Use first failure
-        logger.warning(f"Input guardrail failed: {failed_result.reason}")
-        return ResultModel(
-            user_input=user_input,
-            final_result=None,
-            error=f"Input validation failed: {failed_result.reason}",
-            usage_stats=UsageStatsModel(),
-            token_stats=TokenStatsModel(),
-            messages=[],
-            thread_id=thread_id or str(uuid.uuid4()),
-            conversation_history=[],
-        ).dict()
+        if failed_guardrails:
+            # Return early with guardrail failure
+            failed_result = failed_guardrails[0]  # Use first failure
+            logger.warning(f"Input guardrail failed: {failed_result.reason}")
+            return ResultModel(
+                user_input=user_input,
+                final_result=None,
+                error=f"Input validation failed: {failed_result.reason}",
+                usage_stats=UsageStatsModel(),
+                token_stats=TokenStatsModel(),
+                messages=[],
+                thread_id=thread_id or str(uuid.uuid4()),
+                conversation_history=[],
+            ).dict()
+    else:
+        logger.info("Guardrails bypassed by admin user")
 
     # Normalize thread_id - treat empty string or 'string' as None
     if thread_id and isinstance(thread_id, str):

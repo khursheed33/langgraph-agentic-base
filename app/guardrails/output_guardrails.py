@@ -143,12 +143,20 @@ class ScopeValidationGuardrail(OutputGuardrail):
         scope_indicators = [
             "i can help", "i can assist", "i'm here to help",
             "i can provide", "i can explain", "i can show",
-            "let me help", "i'll help", "i can do"
+            "let me help", "i'll help", "i can do",
+            "how can i help", "i'm here to assist", "i'm here to help"
         ]
 
         has_scope_indicator = any(indicator in content_lower for indicator in scope_indicators)
 
-        if not has_scope_indicator and len(content.split()) > 20:
+        # For conversational/greeting responses, be more lenient
+        word_count = len(content.split())
+        is_greeting_response = any(word in content_lower for word in ["hello", "hi", "hey", "greetings", "how are you", "how can i help"])
+
+        # Allow longer responses for greetings or if scope indicators are present
+        should_validate_scope = word_count > 20 and not (has_scope_indicator or is_greeting_response)
+
+        if should_validate_scope:
             return GuardrailResult(
                 passed=False,
                 score=0.5,

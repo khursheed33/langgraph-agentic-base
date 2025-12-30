@@ -64,7 +64,8 @@ def load_prompt_template_with_agents(
         available_agents = loader.format_for_supervisor(exclude=exclude_agents or ["supervisor"])
         agent_names = loader.get_agent_names_list(exclude=exclude_agents or ["supervisor"])
     
-    agent_names_str = ", ".join([f'"{name}"' for name in agent_names])
+    # Format agent names for prompt (plain list, not quoted to avoid template variable issues)
+    agent_names_str = ", ".join(agent_names)
     
     # Replace placeholders
     prompt_content = prompt_content.replace("{available_agents}", available_agents)

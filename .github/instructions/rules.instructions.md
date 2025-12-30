@@ -1,3 +1,6 @@
+---
+applyTo: '**'
+---
 - Strictly follow existing project folder structure; never add new top-level directories.
 - Do not create unnecessary files like summary.md, test.py, example tests, or test_feature folders.
 - Always create changelog entries in .changelog/ folder with timestamp titles (e.g., auth_updates_202512-23T214200Z.md).

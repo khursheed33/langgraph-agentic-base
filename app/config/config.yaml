@@ -31,17 +31,23 @@ api:
 
 # LLM Configuration
 llm:
-  # Provider: "groq", "openai", "anthropic", etc.
-  provider: "groq"
+  # Provider: "groq", "gemini", "perplexity"
+  provider: "gemini"
   
-  # Model name (provider-specific)
-  # Groq models: "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", etc.
-  # OpenAI models: "gpt-4", "gpt-3.5-turbo", etc.
-  # Anthropic models: "claude-3-opus", "claude-3-sonnet", etc.
-  model: "llama-3.1-70b-versatile"
+  # Groq Configuration
+  # Models: "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", etc.
+  groq_model: "llama-3.1-70b-versatile"
+  
+  # Gemini Configuration
+  # Models: "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro", etc.
+  gemini_model: "gemini-1.5-pro"
+  
+  # Perplexity Configuration
+  # Models: "llama-2-70b-chat", "mistral-7b-instruct", "sonar-small-chat", etc.
+  perplexity_model: "llama-2-70b-chat"
   
   # API Key (should be set in .env file, not here)
-  # api_key: ""  # Set via GROQ_API_KEY, OPENAI_API_KEY, etc. in .env
+  # GROQ_API_KEY, GEMINI_API_KEY, PERPLEXITY_API_KEY should be set in .env
   
   # Temperature (0.0 to 2.0) - Controls randomness
   temperature: 0.1

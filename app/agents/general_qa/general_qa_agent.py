@@ -1,7 +1,7 @@
 """General QA agent implementation for general conversational responses."""
 
 from app.agents.base_agent import BaseAgent
-from app.constants import AgentType, TaskStatus
+from app.constants import AgentType, TaskStatus, END_NODE
 from app.models.workflow_state import AgentState, UsageStats
 from app.utils.agent_utils import (
     build_agent_messages,

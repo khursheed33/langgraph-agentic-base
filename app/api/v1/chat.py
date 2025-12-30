@@ -1,6 +1,6 @@
 """Chat router for handling user messages."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.schemas.agent_status_response import AgentStatusResponse
 from app.api.schemas.chat_request import ChatRequest
@@ -11,12 +11,14 @@ from app.api.schemas.token_cost_response import TokenCostResponse
 from app.api.schemas.token_info_response import TokenInfoResponse
 from app.api.schemas.token_usage_response import TokenUsageResponse
 from app.api.schemas.tool_status_response import ToolStatusResponse
+from app.api.security import get_current_user
 from app.api.utils import (
     get_all_agent_status,
     get_all_tool_status,
     get_current_task,
     get_workflow_state,
 )
+from app.models.user import AuthUser
 from app.services.workflow_service import run_workflow
 from app.utils.logger import logger
 
@@ -24,27 +26,30 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.post("/", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, current_user: AuthUser = Depends(get_current_user)) -> ChatResponse:
     """Handle chat message and return response with agent/tool status.
     
     Args:
         request: Chat request with message and optional thread_id.
+        current_user: Current authenticated user.
         
     Returns:
         Chat response with result and complete status.
     """
     try:
-        logger.info(f"Received chat request: {request.message[:100]}...")
+        logger.info(f"Received chat request from user {current_user.username}: {request.message[:100]}...")
         
         # Normalize thread_id - generate UUID if empty, None, or invalid
         thread_id = request.thread_id
         if not thread_id or thread_id.strip() == "" or thread_id.lower() == "string":
             thread_id = None
         
-        # Use the workflow service
-        
-        # Run workflow
-        result = await run_workflow(request.message, thread_id)
+        # Run workflow with guardrail bypass if user is admin
+        result = await run_workflow(
+            request.message, 
+            thread_id,
+            bypass_guardrails=current_user.bypass_guardrails
+        )
         # Ensure thread_id is always set from result (should be UUID if new thread)
         thread_id = result.get("thread_id")
         if not thread_id:

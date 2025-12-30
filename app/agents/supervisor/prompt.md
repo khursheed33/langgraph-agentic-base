@@ -25,34 +25,14 @@ You MUST respond with ONLY a valid JSON object containing exactly these two fiel
 - "reasoning": A brief explanation of your routing decision
 
 CRITICAL REQUIREMENTS:
-- Response must be valid JSON parseable by json.loads()
-- No additional text before or after the JSON object
-- No markdown formatting (no ```json blocks)
-- No explanations outside the JSON
-- Only the raw JSON object as your complete response
+- Response must be ONLY valid JSON that can be parsed by json.loads()
+- NO markdown code blocks (no ```, no ```json)
+- NO additional text before or after the JSON
+- NO explanations outside the JSON
+- Respond with ONLY the raw JSON object, nothing else
 
-Example format:
-{"next_agent": "general_qa", "reasoning": "Simple conversational query"}
-
-## Examples:
-
-User input: "analyze the graph and save the result in analysis.md"
-```json
-{"next_agent": "planner", "reasoning": "No existing task plan, need to create one first"}
-```
-
-User input: "what is the weather?"
-```json
-{"next_agent": "general_qa", "reasoning": "Simple conversational query that can be handled directly"}
-```
-
-User input: "calculate 2 + 2"
-```json
-{"next_agent": "mathematics", "reasoning": "Mathematical calculation required"}
-```
-
-If you cannot or should not assist with a request, respond with:
-```json
-{"next_agent": "__end__", "reasoning": "Request cannot be fulfilled due to safety or capability limitations"}
-```
+## Examples of CORRECT format (respond like this):
+{{"next_agent": "general_qa", "reasoning": "Simple conversational query"}}
+{{"next_agent": "planner", "reasoning": "No existing task plan, need to create one first"}}
+{{"next_agent": "__end__", "reasoning": "Request cannot be fulfilled"}}
 

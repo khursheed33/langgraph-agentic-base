@@ -56,19 +56,28 @@ class SettingsManager:
                 load_dotenv=True,
                 dotenv_path=".env",
                 validators=[
-                    # LLM settings - API key from env, others from config.yaml
-                    Validator("GROQ_API_KEY", must_exist=True),
-                    Validator("GROQ_MODEL", default=llm_config.get("model", "llama-3.1-70b-versatile")),
+                    # LLM provider selection
                     Validator("LLM_PROVIDER", default=llm_config.get("provider", "groq")),
                     Validator("LLM_TEMPERATURE", default=llm_config.get("temperature", 0.1), cast=float),
                     Validator("LLM_MAX_TOKENS", default=llm_config.get("max_tokens", 8192), cast=int),
                     Validator("LLM_MAX_INPUT_TOKENS", default=llm_config.get("max_input_tokens", 32768), cast=int),
                     Validator("LLM_TOP_P", default=llm_config.get("top_p", 1.0), cast=float),
                     Validator("LLM_TIMEOUT", default=llm_config.get("timeout", 60), cast=int),
+                    # Groq settings
+                    Validator("GROQ_API_KEY", default=""),
+                    Validator("GROQ_MODEL", default=llm_config.get("groq_model", "llama-3.1-70b-versatile")),
+                    # Gemini settings
+                    Validator("GEMINI_API_KEY", default=""),
+                    Validator("GEMINI_MODEL", default=llm_config.get("gemini_model", "gemini-1.5-pro")),
+                    # Perplexity settings
+                    Validator("PERPLEXITY_API_KEY", default=""),
+                    Validator("PERPLEXITY_MODEL", default=llm_config.get("perplexity_model", "llama-2-70b-chat")),
                     # Neo4j settings
                     Validator("NEO4J_URI", default=neo4j_config.get("uri", "bolt://localhost:7687")),
                     Validator("NEO4J_USER", default=neo4j_config.get("user", "neo4j")),
                     Validator("NEO4J_PASSWORD", default=neo4j_config.get("password", "")),
+                    # JWT settings
+                    Validator("JWT_SECRET_KEY", default="your-secret-key-change-in-production"),
                     # Workflow settings
                     Validator("LOG_LEVEL", default=logging_config.get("level", "INFO")),
                     Validator("MAX_ITERATIONS", default=workflow_config.get("max_iterations", 50), cast=int),
@@ -88,6 +97,26 @@ class SettingsManager:
     def GROQ_MODEL(self) -> str:
         """Get Groq model name."""
         return self._settings.GROQ_MODEL
+
+    @property
+    def GEMINI_API_KEY(self) -> str:
+        """Get Gemini API key."""
+        return self._settings.GEMINI_API_KEY
+
+    @property
+    def GEMINI_MODEL(self) -> str:
+        """Get Gemini model name."""
+        return self._settings.GEMINI_MODEL
+
+    @property
+    def PERPLEXITY_API_KEY(self) -> str:
+        """Get Perplexity API key."""
+        return self._settings.PERPLEXITY_API_KEY
+
+    @property
+    def PERPLEXITY_MODEL(self) -> str:
+        """Get Perplexity model name."""
+        return self._settings.PERPLEXITY_MODEL
 
     @property
     def NEO4J_URI(self) -> str:
@@ -143,6 +172,11 @@ class SettingsManager:
     def LLM_TIMEOUT(self) -> int:
         """Get LLM timeout."""
         return self._settings.LLM_TIMEOUT
+
+    @property
+    def JWT_SECRET_KEY(self) -> str:
+        """Get JWT secret key."""
+        return self._settings.JWT_SECRET_KEY
 
     def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get a setting value by key."""

@@ -50,8 +50,8 @@ class SupervisorAgent(BaseAgent):
 
         # Check if there's an error and planner has been called multiple times
         planner_call_count = sum(
-            1 for msg in state.messages 
-            if msg.get("role") == "planner" or 
+            1 for msg in state.messages
+            if msg.get("role") == "planner" or
             (isinstance(msg, dict) and "planner" in str(msg.get("content", "")).lower())
         )
         if state.error and "planner" in state.error.lower() and planner_call_count >= 3:
@@ -60,9 +60,28 @@ class SupervisorAgent(BaseAgent):
             state.final_result = SUPERVISOR_PLANNER_ERROR_MSG.format(error=state.error)
             return state, usage_stats
 
+        # Check if all tasks are completed - end workflow immediately
+        if state.task_list and state.task_list.all_tasks_completed():
+            logger.info("All tasks completed - ending workflow")
+            state.current_agent = END_NODE
+            # Build final result from completed tasks
+            results = []
+            for task in state.task_list.tasks:
+                if task.result:
+                    results.append(task.result)
+                elif task.error:
+                    results.append(f"Error: {task.error}")
+            state.final_result = "\n".join(results) if len(results) > 1 else (results[0] if results else "")
+            state.messages.append({
+                "role": "supervisor",
+                "content": "All tasks completed - ending workflow"
+            })
+            return state, usage_stats
+
         # Prepare context for supervisor
         context = build_supervisor_context(state)
         response = None
+        response_content = ""
         try:
             # Format prompt template with context
             formatted_messages = self.prompt_template.format_messages(input=context)
@@ -140,40 +159,52 @@ class SupervisorAgent(BaseAgent):
             if decision is None:
                 logger.warning("All parsing strategies failed, using classifier fallback logic")
                 user_input = state.user_input
-                result = asyncio.run(self._classify_intent(user_input))
-                intent = result.metadata.get("intent")
-                confidence = result.metadata.get("confidence")
+                try:
+                    result = asyncio.run(self._classify_intent(user_input))
+                    intent = result.metadata.get("intent") if result.metadata else None
+                    confidence = result.metadata.get("confidence") if result.metadata else 0.0
 
-                if not result.passed:
-                    decision = SupervisorDecision(
-                        next_agent=END_NODE,
-                        reasoning=result.reason or SUPERVISOR_SAFETY_STOP_MSG
-                    )
-                else:
-                    # Map intents to agents
-                    agent_map = {
-                        "information_seeking": AgentType.GENERAL_QA,
-                        "conversational": AgentType.GENERAL_QA,
-                        "data_retrieval": AgentType.NEO4J,
-                        "analysis_request": AgentType.NEO4J,
-                        "file_operations": AgentType.FILESYSTEM,
-                        "database_operations": AgentType.NEO4J,
-                        "mathematics": AgentType.MATHEMATICS,
-                        "help_request": AgentType.GENERAL_QA,
-                    }
-                    mapped_agent = agent_map.get(intent, AgentType.PLANNER)
-                    short_reason = result.reason or f"Mapped intent '{intent}'"
-                    decision = SupervisorDecision(
-                        next_agent=mapped_agent,
-                        reasoning=short_reason
-                    )
-                    # If greeting and very short, end directly
-                    if intent == "conversational" and len(user_input.split()) <= 3:
+                    if not result.passed:
                         decision = SupervisorDecision(
                             next_agent=END_NODE,
-                            reasoning="Simple greeting - ending workflow directly"
+                            reasoning=result.reason or SUPERVISOR_SAFETY_STOP_MSG
                         )
-                        state.final_result = SUPERVISOR_GREETING_MSG
+                    else:
+                        # Map intents to agents
+                        agent_map = {
+                            "information_seeking": AgentType.GENERAL_QA,
+                            "conversational": AgentType.GENERAL_QA,
+                            "data_retrieval": AgentType.NEO4J,
+                            "analysis_request": AgentType.NEO4J,
+                            "file_operations": AgentType.FILESYSTEM,
+                            "database_operations": AgentType.NEO4J,
+                            "mathematics": AgentType.MATHEMATICS,
+                            "help_request": AgentType.GENERAL_QA,
+                        }
+                        mapped_agent = agent_map.get(intent, AgentType.PLANNER) if intent else AgentType.PLANNER
+                        short_reason = result.reason or f"Mapped intent '{intent}'"
+                        decision = SupervisorDecision(
+                            next_agent=mapped_agent,
+                            reasoning=short_reason
+                        )
+                        # If greeting and very short, route to general_qa to generate response
+                        if intent == "conversational" and len(user_input.split()) <= 3:
+                            decision = SupervisorDecision(
+                                next_agent=AgentType.GENERAL_QA,
+                                reasoning="Simple greeting - routing to general_qa for response"
+                            )
+                except Exception as classifier_error:
+                    logger.warning(f"Classifier fallback failed: {type(classifier_error).__name__}: {classifier_error}")
+                    # Ultimate fallback - check query complexity
+                    user_input_lower = state.user_input.lower()
+                    is_simple_query = len(state.user_input.split()) <= 3 or any(
+                        greeting in user_input_lower for greeting in ["hi", "hello", "hey", "howdy", "how are you"]
+                    )
+                    fallback_agent = AgentType.GENERAL_QA if is_simple_query else AgentType.PLANNER
+                    decision = SupervisorDecision(
+                        next_agent=fallback_agent,
+                        reasoning=f"Classifier failed, routing to {fallback_agent.value} based on query complexity"
+                    )
             logger.info(
                 f"Supervisor decision: route to {decision.next_agent}. "
                 f"Reasoning: {decision.reasoning}"
@@ -203,19 +234,27 @@ class SupervisorAgent(BaseAgent):
         except Exception as e:
             logger.error(f"Supervisor error: {type(e).__name__}: {e}")
             logger.error(f"Response content that caused error: '{response_content}'")
-            response_text = response.content.lower() if response else ""
-            refusal_indicators = [
-                "sorry", "can't help", "unable to assist", "cannot assist",
-                "not able to", "refuse", "decline", "won't"
-            ]
-            is_refusal = any(indicator in response_text for indicator in refusal_indicators)
-            if is_refusal:
-                logger.warning("LLM refused to provide routing decision - ending workflow")
-                state.current_agent = END_NODE
-                state.final_result = SUPERVISOR_SAFETY_STOP_MSG
-                state.error = None  # Clear the error since this is expected behavior
-            else:
-                logger.error("All parsing failed, ending workflow")
+            logger.error(f"Full exception: {repr(e)}", exc_info=True)
+            
+            # Try fallback routing instead of immediately returning error
+            try:
+                user_input_lower = state.user_input.lower()
+                is_simple_query = len(state.user_input.split()) <= 3 or any(
+                    greeting in user_input_lower for greeting in ["hi", "hello", "hey", "howdy", "how are you"]
+                )
+                fallback_agent = AgentType.GENERAL_QA if is_simple_query else AgentType.PLANNER
+                
+                state.current_agent = fallback_agent
+                state.messages.append({
+                    "role": "supervisor",
+                    "content": f"Supervisor exception occurred, falling back to {fallback_agent.value}: {type(e).__name__}"
+                })
+                logger.warning(f"Supervisor exception handled with fallback routing to {fallback_agent.value}")
+                return state, usage_stats
+            except Exception as fallback_error:
+                logger.error(f"Fallback routing also failed: {type(fallback_error).__name__}: {fallback_error}")
+                # If all else fails, end workflow with error message
                 state.current_agent = END_NODE
                 state.final_result = SUPERVISOR_TECHNICAL_DIFFICULTIES_MSG
+
         return state, usage_stats
