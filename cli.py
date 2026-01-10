@@ -16,7 +16,7 @@ from app.models.state_typed import AgentStateTyped
 from app.utils.agent_metadata import get_agent_metadata_loader
 from app.utils.logger import logger
 from app.utils.settings import settings
-from app.workflow import create_workflow
+from app.utils.workflow_cache import get_cached_workflow
 
 console = Console()
 
@@ -189,18 +189,18 @@ def display_result(result: dict) -> None:
 
 def run_workflow(user_input: str, thread_id: Optional[str] = None) -> dict:
     """Run the workflow with user input and optional thread_id for conversation history.
-    
+
     Args:
         user_input: User's input/query.
         thread_id: Optional thread ID for conversation continuity. If None, creates new thread.
-        
+
     Returns:
         Dictionary with workflow result and metadata.
     """
     import uuid
-    
+
     logger.info(f"Starting workflow with input: {user_input}")
-    
+
     # Generate thread_id if not provided (for new conversation)
     if thread_id is None:
         thread_id = str(uuid.uuid4())
@@ -208,8 +208,8 @@ def run_workflow(user_input: str, thread_id: Optional[str] = None) -> dict:
     else:
         logger.info(f"Continuing conversation thread: {thread_id}")
 
-    # Create workflow with checkpointer
-    app = create_workflow()
+    # Get cached workflow (initialized once at startup)
+    app = get_cached_workflow()
 
     # Prepare config with thread_id for checkpointing
     config = {
@@ -302,9 +302,14 @@ def run_workflow(user_input: str, thread_id: Optional[str] = None) -> dict:
 def interactive_mode() -> None:
     """Run in interactive mode with conversation history support."""
     import uuid
-    
+
     display_welcome()
-    
+
+    # Initialize workflow cache at startup (agents and tools loaded once)
+    console.print("[dim]Initializing workflow cache...[/dim]")
+    get_cached_workflow()
+    console.print("[dim]Workflow cache initialized successfully![/dim]\n")
+
     # Create a thread_id for this interactive session
     thread_id = str(uuid.uuid4())
     console.print(f"[dim]Conversation thread ID: {thread_id}[/dim]\n")
@@ -329,7 +334,11 @@ def interactive_mode() -> None:
 def main() -> None:
     """Main CLI function."""
     if len(sys.argv) > 1:
-        # Single command mode
+        # Single command mode - initialize workflow cache first
+        console.print("[dim]Initializing workflow cache...[/dim]")
+        get_cached_workflow()
+        console.print("[dim]Workflow cache initialized successfully![/dim]\n")
+
         user_input = " ".join(sys.argv[1:])
         result = run_workflow(user_input)
         display_result(result)
