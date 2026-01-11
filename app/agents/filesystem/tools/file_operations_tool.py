@@ -6,6 +6,7 @@ from typing import Optional, Type
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from app.utils.agent_utils import resolve_output_path
 from app.utils.logger import logger
 
 
@@ -18,10 +19,13 @@ class ReadFileInput(BaseModel):
 class WriteFileInput(BaseModel):
     """Input for write file tool."""
 
-    file_path: str = Field(..., description="Path to the file to write")
+    file_path: str = Field(..., description="Path to the file to write. Relative paths are automatically resolved within the output directory.")
     content: str = Field(..., description="Content to write to the file")
     create_dirs: bool = Field(
         default=True, description="Create parent directories if they don't exist"
+    )
+    use_output_dir: bool = Field(
+        default=True, description="Resolve relative paths within the output directory. Set to false for absolute paths."
     )
 
 
@@ -68,18 +72,22 @@ class WriteFileTool(BaseTool):
     args_schema: Type[BaseModel] = WriteFileInput
 
     def _run(
-        self, file_path: str, content: str, create_dirs: bool = True
+        self, file_path: str, content: str, create_dirs: bool = True, use_output_dir: bool = True
     ) -> str:
         """Write content to file."""
         try:
-            path = Path(file_path)
-            
+            # Resolve the file path
+            if use_output_dir:
+                path = resolve_output_path(file_path)
+            else:
+                path = Path(file_path)
+
             if create_dirs:
                 path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             path.write_text(content, encoding="utf-8")
-            logger.info(f"Wrote file: {file_path} ({len(content)} characters)")
-            return f"Successfully wrote {len(content)} characters to {file_path}"
+            logger.info(f"Wrote file: {path} ({len(content)} characters)")
+            return f"Successfully wrote {len(content)} characters to {path}"
         except Exception as e:
             logger.error(f"Error writing file {file_path}: {e}")
             return f"Error writing file: {str(e)}"

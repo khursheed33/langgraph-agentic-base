@@ -80,3 +80,41 @@ agents:
       - Mathematical problem solving
       - Numerical computations
 
+  compiler:
+    name: compiler
+    description: Compile Python files and directories with comprehensive error analysis and reporting.
+    capabilities:
+      - Compile single Python files or entire directories
+      - Perform recursive compilation of directory trees
+      - Generate detailed compilation reports for multiple files
+      - Detect and report compilation errors, warnings, and syntax issues
+      - Analyze source code structure and metadata across all files
+      - Save comprehensive compilation summaries to output directory
+      - Provide file-by-file compilation status and diagnostics
+    use_cases:
+      - Batch compilation of Python projects
+      - Syntax validation and error checking
+      - Code quality assessment across multiple files
+      - Build process automation and testing
+      - Pre-deployment compilation verification
+      - Development workflow integration
+
+  python_code_generator:
+    name: python_code_generator
+    description: Generate high-quality Python code from natural language requirements with proper structure, documentation, and validation.
+    capabilities:
+      - Generate complete Python programs from descriptions
+      - Create well-structured code with functions, classes, and modules
+      - Include comprehensive docstrings and type hints
+      - Generate code for data processing, web development, utilities, and more
+      - Validate generated code for syntax correctness
+      - Follow Python best practices and PEP 8 standards
+      - Return generated code for filesystem agent to save
+    use_cases:
+      - Automated code generation from requirements
+      - Rapid prototyping and scaffolding
+      - Creating utility scripts and tools
+      - Generating boilerplate code
+      - Converting specifications to working code
+      - Educational code examples and tutorials
+

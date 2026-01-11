@@ -48,6 +48,7 @@ class SettingsManager:
             workflow_config = config_data.get("workflow", {})
             neo4j_config = config_data.get("neo4j", {})
             logging_config = config_data.get("logging", {})
+            output_config = config_data.get("output", {})
             
             self._settings = Dynaconf(
                 envvar_prefix=False,
@@ -81,6 +82,9 @@ class SettingsManager:
                     # Workflow settings
                     Validator("LOG_LEVEL", default=logging_config.get("level", "INFO")),
                     Validator("MAX_ITERATIONS", default=workflow_config.get("max_iterations", 50), cast=int),
+                    # Output settings
+                    Validator("OUTPUT_DIRECTORY", default=output_config.get("directory", "output")),
+                    Validator("OUTPUT_AUTO_CREATE", default=output_config.get("auto_create", True), cast=bool),
                 ],
             )
             _logger.info("SettingsManager initialized successfully")
@@ -177,6 +181,16 @@ class SettingsManager:
     def JWT_SECRET_KEY(self) -> str:
         """Get JWT secret key."""
         return self._settings.JWT_SECRET_KEY
+
+    @property
+    def OUTPUT_DIRECTORY(self) -> str:
+        """Get output directory path."""
+        return self._settings.OUTPUT_DIRECTORY
+
+    @property
+    def OUTPUT_AUTO_CREATE(self) -> bool:
+        """Get whether to auto-create output directory."""
+        return self._settings.OUTPUT_AUTO_CREATE
 
     def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get a setting value by key."""

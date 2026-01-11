@@ -7,11 +7,13 @@ routing of agents without hardcoding agent names in the workflow.
 from typing import Callable, Type
 
 from app.agents.base_agent import BaseAgent
+from app.agents.compiler.compiler_agent import CompilerAgent
 from app.agents.filesystem.filesystem_agent import FileSystemAgent
 from app.agents.general_qa.general_qa_agent import GeneralQAAgent
 from app.agents.mathematics.mathematics_agent import MathematicsAgent
 from app.agents.neo4j.neo4j_agent import Neo4jAgent
 from app.agents.planner.planner_agent import PlannerAgent
+from app.agents.python_code_generator.python_code_generator_agent import PythonCodeGeneratorAgent
 from app.agents.supervisor.supervisor_agent import SupervisorAgent
 from app.constants import AgentType, AVAILABLE_AGENTS, END_NODE
 from app.models.workflow_state import AgentState, UsageStats
@@ -25,6 +27,8 @@ AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {
     AgentType.FILESYSTEM: FileSystemAgent,
     AgentType.GENERAL_QA: GeneralQAAgent,
     AgentType.MATHEMATICS: MathematicsAgent,
+    AgentType.COMPILER: CompilerAgent,
+    AgentType.PYTHON_CODE_GENERATOR: PythonCodeGeneratorAgent,
 }
 
 # Agent instances cache (singleton pattern per agent type)

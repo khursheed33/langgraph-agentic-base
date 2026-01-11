@@ -11,6 +11,8 @@ class AgentType(str, Enum):
     FILESYSTEM = "filesystem"
     GENERAL_QA = "general_qa"
     MATHEMATICS = "mathematics"
+    COMPILER = "compiler"
+    PYTHON_CODE_GENERATOR = "python_code_generator"
 
 class WorkflowStatus(str, Enum):
     """Workflow execution status."""
@@ -33,6 +35,8 @@ AGENT_CAPABILITIES: Final[dict[str, str]] = {
     AgentType.FILESYSTEM: "Read and write files, create directories, and manage file system operations.",
     AgentType.GENERAL_QA: "Handle general conversational queries, greetings, questions, and provide friendly responses to user inputs.",
     AgentType.MATHEMATICS: "Perform mathematical calculations, solve equations, and provide mathematical problem-solving capabilities.",
+    AgentType.COMPILER: "Compile source code files and generate detailed compilation summaries with error analysis.",
+    AgentType.PYTHON_CODE_GENERATOR: "Generate high-quality Python code from natural language requirements with proper structure, documentation, and validation.",
 }
 
 # Available agents list
@@ -41,6 +45,8 @@ AVAILABLE_AGENTS: Final[list[str]] = [
     AgentType.FILESYSTEM,
     AgentType.GENERAL_QA,
     AgentType.MATHEMATICS,
+    AgentType.COMPILER,
+    AgentType.PYTHON_CODE_GENERATOR,
 ]
 
 # End node name

@@ -32,7 +32,7 @@ api:
 # LLM Configuration
 llm:
   # Provider: "groq", "gemini", "perplexity"
-  provider: "gemini"
+  provider: "groq"
   
   # Groq Configuration
   # Models: "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", etc.
@@ -136,6 +136,14 @@ task_persistence:
 
   # File format: "json" or "yaml"
   format: "json"
+
+# Output Configuration
+output:
+  # Directory for agent file dumps and data exports
+  directory: "output"
+
+  # Enable automatic output directory creation
+  auto_create: true
 
 # Guardrail Configuration
 # Safety and quality controls for agent interactions

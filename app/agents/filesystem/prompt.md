@@ -20,9 +20,10 @@ You have access to file system tools. Use them to:
 1. Understand the task description provided
 2. If the task mentions writing content from previous tasks, extract the markdown content from the "Previous Task Results" section
 3. Use the write_file tool to write the content to the specified file
-4. Ensure file paths are handled correctly
-5. Create directories if they don't exist before writing files
-6. Write the ACTUAL markdown content from previous tasks - do not ask for it or wait for it
+4. **STANDARD PRACTICE**: By default, create data dump files in the output directory. Relative paths are automatically resolved to the output directory.
+5. Ensure file paths are handled correctly - use relative paths for output files to leverage the output directory standard
+6. Create directories if they don't exist before writing files
+7. Write the ACTUAL markdown content from previous tasks - do not ask for it or wait for it
 
 ## Important:
 - When writing files, extract the markdown content from previous task results

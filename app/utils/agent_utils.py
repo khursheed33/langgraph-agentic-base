@@ -1,5 +1,7 @@
 """Utility functions for common agent operations."""
 
+import os
+from pathlib import Path
 from typing import Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -7,6 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from app.constants import AgentType, TaskStatus
 from app.models.workflow_state import AgentState, Task, TaskList
+from app.utils.settings import settings
 
 
 def find_pending_task(
@@ -142,4 +145,52 @@ def get_conversation_context(
         ]
     )
     return conversation_context
+
+
+def get_output_directory() -> Path:
+    """Get the output directory path, ensuring it exists if auto-create is enabled.
+
+    Returns:
+        Path to the output directory.
+    """
+    output_dir = Path(settings.OUTPUT_DIRECTORY)
+
+    # Make it absolute if it's relative
+    if not output_dir.is_absolute():
+        # Assume it's relative to the project root
+        project_root = Path(__file__).parent.parent.parent
+        output_dir = project_root / output_dir
+
+    # Create directory if auto-create is enabled
+    if settings.OUTPUT_AUTO_CREATE and not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    return output_dir
+
+
+def resolve_output_path(file_path: str) -> Path:
+    """Resolve a file path to be within the output directory if it's not an absolute path.
+
+    Args:
+        file_path: The file path to resolve.
+
+    Returns:
+        Resolved Path object within the output directory.
+    """
+    path = Path(file_path)
+
+    # If it's already absolute, return as-is
+    if path.is_absolute():
+        return path
+
+    # If it's relative, resolve it within the output directory
+    output_dir = get_output_directory()
+    return output_dir / path
+
+
+def ensure_output_directory_exists() -> None:
+    """Ensure the output directory exists, creating it if necessary."""
+    output_dir = get_output_directory()
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
 
